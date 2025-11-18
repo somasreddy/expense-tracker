@@ -2,7 +2,7 @@ import { Category } from './types';
 
 export const CATEGORY_KEYWORDS: Record<Category, string[]> = {
   Grocery: ["grocery", "supermarket", "kirana", "vegetables", "fruits", "milk", "bread", "staples", "dmart", "openmart"],
-  Fuel: ["fuel", "petrol", "diesel", "gas", "car wash"],
+  Fuel: ["fuel", "petrol", "diesel", "gas", "car wash", "bike wash"],
   Bills: ["electricity", "water bill", "internet", "phone bill", "mobile recharge", "subscription", "utility bill", "credit card bill", "jio fiber", "postpaid"],
   Shopping: ["shopping", "clothes", "fashion", "online store", "mall", "electronics", "gadgets", "apparel", "accessories"],
   Food: ["food", "restaurant", "cafe", "dine out", "swiggy", "zomato", "snacks", "coffee", "lunch", "dinner", "breakfast"],
