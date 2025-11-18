@@ -9,15 +9,8 @@ import { initializeApp } from "firebase/app";
 // FIX: Reverted to a namespace import (`* as fbAuth`) as the named imports are failing to resolve,
 // likely due to a build configuration issue. This ensures all auth functions are correctly accessed.
 // FIX: Switched to named imports for `firebase/auth` as per the Firebase v9 modular SDK standard. This resolves the module resolution errors.
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-  type User,
-} from "firebase/auth";
+// FIX: Reverted to a namespace import for `firebase/auth` to resolve module resolution errors.
+import * as fbAuth from "firebase/auth";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -40,16 +33,16 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 // This is then exported for use in other parts of the application.
-export const auth = getAuth(app);
+export const auth = fbAuth.getAuth(app);
 
 // FIX: Re-export auth functions and types to centralize imports and resolve module resolution issues.
 // Replaced individual constant exports with a cleaner re-export syntax using the named imports.
 // Destructure and re-export from the namespace import to work around module resolution issues.
-export {
+export const {
   onAuthStateChanged,
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
-};
-export type { User };
+} = fbAuth;
+export type User = fbAuth.User;
