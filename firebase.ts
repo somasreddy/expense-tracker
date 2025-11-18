@@ -2,18 +2,11 @@
 import { initializeApp } from "firebase/app";
 // FIX: Switched to getAuth and setPersistence for wider Firebase v9 SDK compatibility.
 // This resolves errors where `initializeAuth` and the `User` type are not exported in older v9 versions.
-// FIX: Use a namespace import to resolve module export errors in older Firebase v9 SDKs.
+// FIX: Using named imports for auth functions to ensure compatibility across Firebase v9 SDK versions.
+// By importing the entire module as a namespace, we can access all auth functions even if they aren't top-level named exports in older v9 SDKs.
 import * as fbAuth from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
-const {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-} = fbAuth;
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -35,7 +28,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 // Explicitly initialize Auth with IndexedDB persistence to ensure session is retained.
 // FIX: Use getAuth and setPersistence for broader version compatibility.
-export const auth = getAuth(app);
+export const auth = fbAuth.getAuth(app);
 // FIX: The `setPersistence` call has been removed as it is not available in older Firebase v9 SDKs,
 // which causes a "not an exported member" error. The application will fall back to session persistence.
 /*
@@ -51,12 +44,16 @@ export const db = getFirestore(app);
 // FIX: Removed re-export of User type as it is not available in older Firebase v9 SDKs.
 // The type will be inferred where needed (e.g., `typeof auth.currentUser`).
 
-export {
+// FIX: Re-exporting auth functions from the namespace to make them available to the rest of the app.
+export const {
   onAuthStateChanged,
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  updateProfile,
+  updateProfile
+} = fbAuth;
+
+export {
   doc,
   setDoc,
   getDoc,

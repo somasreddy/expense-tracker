@@ -29,7 +29,7 @@ const Auth: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <motion.div 
-        className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/10"
+        className="w-full max-w-md card-surface p-8"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
