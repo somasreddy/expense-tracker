@@ -5,7 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>React Expense Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">
 {
   "imports": {
@@ -72,8 +71,10 @@
     background-color: var(--color-bg);
     color: var(--color-text-secondary);
     font-family: var(--font-sans);
-    overflow: hidden; /* Hide the overflow from the large aurora pseudo-elements */
     position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   body::before, body::after {
@@ -173,6 +174,6 @@
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+  <script type="module" src="/src/index.tsx"></script>
 </body>
 </html>

@@ -1,0 +1,170 @@
+/* ==========================================================
+   ✅ Tailwind v4 Import (NO CLI, NO config needed)
+   ========================================================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "tailwindcss";
+
+
+/* ==========================================================
+   🎨 Smooth Theme Transitions (Premium Look)
+   ========================================================== */
+:root, body, html {
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+
+/* ==========================================================
+   🌈 THEME VARIABLES (11 THEMES)
+   These control:
+   - Page Background
+   - Card Background
+   - Text Color
+   - Accent Color (buttons, highlights)
+   ========================================================== */
+
+/* Light Theme */
+.light {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --accent: #f59e0b;
+}
+
+/* Dark Theme */
+.dark {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e2e8f0;
+  --accent: #fbbf24;
+}
+
+/* Amber Luxury Theme */
+.amber {
+  --bg: #1a1201;
+  --card: #2c1a04;
+  --text: #fef3c7;
+  --accent: #f59e0b;
+}
+
+/* Neon Blue Theme */
+.neon {
+  --bg: #000014;
+  --card: #001b44;
+  --text: #e0f2fe;
+  --accent: #38bdf8;
+}
+
+/* AMOLED Pure Black */
+.amoled {
+  --bg: #000000;
+  --card: #0a0a0a;
+  --text: #fafafa;
+  --accent: #facc15;
+}
+
+/* Pastel Light Blue Theme */
+.pastel {
+  --bg: #e3f2fd;
+  --card: #ffffff;
+  --text: #0d1b2a;
+  --accent: #64b5f6;
+}
+
+/* Glassmorphism Theme */
+.glass {
+  --bg: rgba(255, 255, 255, 0.1);
+  --card: rgba(255, 255, 255, 0.16);
+  --text: #ffffff;
+  --accent: #90caf9;
+  backdrop-filter: blur(16px);
+}
+
+/* Red-Black Gaming Theme */
+.gaming {
+  --bg: #0a0000;
+  --card: #1a0000;
+  --text: #ff4d4d;
+  --accent: #ff1a1a;
+}
+
+/* Midnight Purple Theme */
+.midnight {
+  --bg: #0d0221;
+  --card: #18043b;
+  --text: #e0d4f7;
+  --accent: #9d4edd;
+}
+
+/* Emerald Mint Theme */
+.emerald {
+  --bg: #e6fff5;
+  --card: #ffffff;
+  --text: #003d29;
+  --accent: #34d399;
+}
+
+/* Sunset Orange-Yellow Theme */
+.sunset {
+  --bg: linear-gradient(to bottom, #fbbf24, #f97316);
+  --card: rgba(255, 255, 255, 0.28);
+  --text: #1f1f1f;
+  --accent: #fbbf24;
+}
+
+
+/* ==========================================================
+   📌 Global Application Styling
+   ========================================================== */
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Generic card backgrounds for all your app cards */
+.card-surface {
+  background: var(--card) !important;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+/* Buttons using accent color */
+.button {
+  background-color: var(--accent) !important;
+  color: #000;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+
+/* ==========================================================
+   🧭 Smooth Scrollbar Styling (dark/light adaptive)
+   ========================================================== */
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #1e293b;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}

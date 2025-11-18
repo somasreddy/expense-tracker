@@ -26,6 +26,7 @@ export const saveData = async (data: AppData): Promise<void> => {
   }
 };
 
+
 const loadDataFromLocalStorage = (): AppData | null => {
   try {
     const data = localStorage.getItem(NEW_STORAGE_KEY);
@@ -56,26 +57,29 @@ const loadDataFromLocalStorage = (): AppData | null => {
       console.log("Migrating old data to new format...");
       const oldExpenses: Omit<Expense, 'accountId'>[] = JSON.parse(oldData);
       const defaultAccount: Account = { id: 'default-account-1', name: 'Personal' };
-      
+
       const newExpenses: Expense[] = oldExpenses.map(exp => ({
         ...exp,
         accountId: defaultAccount.id,
       }));
-      
+
       const migratedData: AppData = {
         accounts: [defaultAccount],
         expenses: newExpenses,
       };
-      
+
       localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(migratedData));
       localStorage.removeItem(OLD_STORAGE_KEY);
       return migratedData;
     }
-
   } catch (error) {
     console.error("Failed to load or parse data from localStorage", error);
   }
   return null;
+};
+
+export const loadCachedAppData = (): AppData | null => {
+  return loadDataFromLocalStorage();
 };
 
 const getDefaultData = (): AppData => {
