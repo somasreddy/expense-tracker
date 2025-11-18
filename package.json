@@ -1,5 +1,5 @@
 {
-  "name": "react-expense-tracker",
+  "name": "expense-tracker",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.4.1",
-    "framer-motion": "^11.3.19"
+    "framer-motion": "^11.3.19",
+    "firebase": "^12.6.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

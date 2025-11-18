@@ -1,5 +1,4 @@
-// FIX: Import the 'Category' type to resolve TypeScript errors in this file.
-import { Expense, Profile, AppData, Category } from '../types';
+import { Expense, Account, AppData, Category } from '../types';
 import { CATEGORY_KEYWORDS } from '../constants';
 
 const OLD_STORAGE_KEY = 'expenseCalculator_expenses';
@@ -18,23 +17,40 @@ export const loadData = (): AppData => {
   try {
     const data = localStorage.getItem(NEW_STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      const parsedData = JSON.parse(data);
+      // Migration for users with 'profiles' or 'profileId' keys
+      if (parsedData.profiles) {
+        console.log("Migrating profiles to accounts...");
+        parsedData.accounts = parsedData.profiles;
+        delete parsedData.profiles;
+      }
+      if (parsedData.expenses && parsedData.expenses.some((e: any) => e.profileId)) {
+        console.log("Migrating profileId to accountId...");
+        parsedData.expenses = parsedData.expenses.map((e: any) => {
+          if (e.profileId) {
+            const { profileId, ...rest } = e;
+            return { ...rest, accountId: profileId };
+          }
+          return e;
+        });
+      }
+      return parsedData;
     }
 
-    // Migration logic from old format
+    // Migration logic from old format (very first version)
     const oldData = localStorage.getItem(OLD_STORAGE_KEY);
     if (oldData) {
       console.log("Migrating old data to new format...");
-      const oldExpenses: Omit<Expense, 'profileId'>[] = JSON.parse(oldData);
-      const defaultProfile: Profile = { id: 'default-profile-1', name: 'Personal' };
+      const oldExpenses: Omit<Expense, 'accountId'>[] = JSON.parse(oldData);
+      const defaultAccount: Account = { id: 'default-account-1', name: 'Personal' };
       
       const newExpenses: Expense[] = oldExpenses.map(exp => ({
         ...exp,
-        profileId: defaultProfile.id,
+        accountId: defaultAccount.id,
       }));
       
       const migratedData: AppData = {
-        profiles: [defaultProfile],
+        accounts: [defaultAccount],
         expenses: newExpenses,
       };
       
@@ -48,9 +64,9 @@ export const loadData = (): AppData => {
   }
   
   // Return default structure if nothing is found
-  const defaultProfile: Profile = { id: 'default-profile-1', name: 'Personal' };
+  const defaultAccount: Account = { id: 'default-account-1', name: 'Personal' };
   const defaultData: AppData = {
-      profiles: [defaultProfile],
+      accounts: [defaultAccount],
       expenses: [],
   };
   return defaultData;

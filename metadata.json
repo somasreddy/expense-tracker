@@ -1,5 +1,5 @@
 {
-  "name": "React Expense Tracker",
+  "name": "Expense Tracker",
   "description": "A comprehensive, mobile-friendly expense calculator application to track, categorize, and visualize your spending. Features automatic categorization, data persistence using local storage, and interactive charts.",
   "requestFramePermissions": []
 }

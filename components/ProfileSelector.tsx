@@ -1,28 +1,28 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Profile } from '../types';
+import { Account } from '../types';
 
-interface ProfileSelectorProps {
-  profiles: Profile[];
-  currentProfileId: string | null;
-  onSelectProfile: (id: string) => void;
-  onManageProfiles: () => void;
+interface AccountSelectorProps {
+  accounts: Account[];
+  currentAccountId: string | null;
+  onSelectAccount: (id: string) => void;
+  onManageAccounts: () => void;
 }
 
-const ProfileSelector: React.FC<ProfileSelectorProps> = ({ profiles, currentProfileId, onSelectProfile, onManageProfiles }) => {
+const ProfileSelector: React.FC<AccountSelectorProps> = ({ accounts, currentAccountId, onSelectAccount, onManageAccounts }) => {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="relative">
         <select
-          value={currentProfileId || 'all'}
-          onChange={(e) => onSelectProfile(e.target.value)}
+          value={currentAccountId || 'all'}
+          onChange={(e) => onSelectAccount(e.target.value)}
           className="appearance-none block w-full pl-3 pr-10 py-2 bg-slate-700/50 border border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-500 transition-shadow duration-300 ease-in-out"
-          aria-label="Select a profile"
+          aria-label="Select an account"
         >
-          <option value="all">All Profiles</option>
-          {profiles.map(profile => (
-            <option key={profile.id} value={profile.id}>
-              {profile.name}
+          <option value="all">All Accounts</option>
+          {accounts.map(account => (
+            <option key={account.id} value={account.id}>
+              {account.name}
             </option>
           ))}
         </select>
@@ -31,12 +31,12 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({ profiles, currentProf
         </div>
       </div>
       <motion.button
-        onClick={onManageProfiles}
+        onClick={onManageAccounts}
         className="inline-flex justify-center py-2 px-4 border border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-200 bg-slate-700/80 hover:bg-slate-600/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
         whileHover={{ scale: 1.05, y: -2, boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)" }}
         whileTap={{ scale: 0.95 }}
       >
-        Manage Profiles
+        Manage Accounts
       </motion.button>
     </div>
   );
