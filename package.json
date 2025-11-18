@@ -2,7 +2,7 @@
   "name": "expense-tracker",
   "private": true,
   "version": "1.0.0",
-  "homepage": "https://somasreddy.github.io/expense-calculator",
+  "homepage": "https://somasreddy.github.io/expense-tracker",
   "type": "module",
   "scripts": {
     "dev": "vite",
