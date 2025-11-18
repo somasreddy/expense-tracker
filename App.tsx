@@ -305,7 +305,7 @@ const App: React.FC = () => {
         {isAccountManagerOpen && <ProfileManagerModal isOpen={isAccountManagerOpen} onClose={() => setAccountManagerOpen(false)} accounts={accounts} onAddAccount={handleAddAccount} onDeleteAccount={handleDeleteAccount} onUpdateAccount={handleUpdateAccount} />}
       </AnimatePresence>
 
-      <div className="max-w-7xl mx-auto bg-slate-900/50 backdrop-blur-xl p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/10">
+      <div className="max-w-7xl mx-auto card-surface p-4 sm:p-6 lg:p-8">
         <header className="mb-8">
           <div className="flex flex-wrap justify-between items-baseline gap-4">
             <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 tracking-tight leading-tight">
@@ -347,7 +347,7 @@ const App: React.FC = () => {
           animate="visible"
         >
           {/* Left Column */}
-          <motion.div variants={itemVariants} className="lg:col-span-1 space-y-6 bg-slate-800/30 p-6 rounded-2xl border border-white/10">
+          <motion.div variants={itemVariants} className="lg:col-span-1 space-y-6 content-surface p-6">
             <h2 className="text-2xl font-bold text-white">Add New Expense</h2>
             <ExpenseForm onAddExpense={handleAddExpense} />
             <hr className="border-slate-700" />
@@ -356,12 +356,12 @@ const App: React.FC = () => {
 
           {/* Right Column */}
           <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
-            <div className="bg-slate-800/30 p-6 rounded-2xl border border-white/10">
+            <div className="content-surface p-6">
               <h2 className="text-2xl font-bold text-white mb-4">Expense Analysis</h2>
               <ExpenseChart categoryTotals={categoryTotals} onCategoryClick={handleSetCategoryFilter} activeCategory={categoryFilter} />
             </div>
             
-            <div className="bg-slate-800/30 p-6 rounded-2xl border border-white/10">
+            <div className="content-surface p-6">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
                     <h2 className="text-2xl font-bold text-white">
                         {categoryFilter ? `${categoryFilter} Expenses` : 'Recent Expenses'}

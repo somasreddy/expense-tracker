@@ -1,5 +1,6 @@
 
 
+
 import React, { useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Expense } from '../types';
@@ -101,7 +102,9 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
         <input
           type="checkbox"
           checked={isAllSelected}
-          // FIX: Wrap onToggleSelectAll in an arrow function to prevent passing the event object, matching the prop's expected signature.
+          // FIX: The event handler for onChange expects a function that can receive an event argument.
+          // The onToggleSelectAll prop function does not take any arguments, causing a type mismatch.
+          // Wrapping the call in an arrow function `() => onToggleSelectAll()` aligns the signatures and resolves the error.
           onChange={() => onToggleSelectAll()}
           aria-label="Select all expenses"
           className="h-4 w-4 rounded bg-slate-700 border-slate-500 text-amber-400 focus:ring-amber-500"
@@ -125,7 +128,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.2 } }}
               whileHover={{ 
                 scale: 1.03, 
                 y: -5,

@@ -49,7 +49,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({ expense, onUpdate, 
       exit={{ opacity: 0 }}
     >
       <motion.div 
-        className="bg-slate-800/50 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-md m-4 border border-white/10"
+        className="card-surface w-full max-w-md m-4"
         initial={{ scale: 0.9, y: -20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 20, opacity: 0 }}
