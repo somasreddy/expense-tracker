@@ -1,16 +1,24 @@
 
+
+
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // FIX: Consolidate all firebase auth imports to be from the local firebase module to fix resolution errors.
 import { 
   auth,
+  db,
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp
 } from '../firebase';
 
 const Auth: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const formVariants = {
     hidden: { opacity: 0, x: -50 },
@@ -59,7 +67,7 @@ const Auth: React.FC = () => {
 };
 
 const SignUpForm: React.FC = () => {
-    const [familyName, setFamilyName] = useState('');
+    const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -69,6 +77,10 @@ const SignUpForm: React.FC = () => {
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        if (!fullName.trim()) {
+            setError("Full Name is required.");
+            return;
+        }
         if (password !== confirmPassword) {
             setError("Passwords do not match.");
             return;
@@ -80,10 +92,33 @@ const SignUpForm: React.FC = () => {
         setIsLoading(true);
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            if (userCredential.user) {
-              await updateProfile(userCredential.user, {
-                displayName: familyName
+            const user = userCredential.user;
+
+            if (user) {
+              // Update auth profile
+              await updateProfile(user, {
+                displayName: fullName
               });
+              
+              // Create user document in Firestore safely
+              const userDocRef = doc(db, "users", user.uid);
+              await setDoc(userDocRef, {
+                fullName,
+                email,
+                createdAt: serverTimestamp(),
+              }, { merge: true });
+
+              // Create the initial appData document to align with the rest of the app
+              const appDataDocRef = doc(db, "users", user.uid, "appData", "main");
+              const snapshot = await getDoc(appDataDocRef);
+              if (!snapshot.exists()) {
+                  const defaultAccount = { id: 'default-account-1', name: 'Personal' };
+                  const initialAppData = {
+                      accounts: [defaultAccount],
+                      expenses: [],
+                  };
+                  await setDoc(appDataDocRef, initialAppData);
+              }
             }
         } catch (err: any) {
             setError(err.message);
@@ -94,7 +129,7 @@ const SignUpForm: React.FC = () => {
 
     return (
         <form onSubmit={handleSignUp} className="space-y-4">
-            <InputField id="familyName" type="text" label="Family Name" value={familyName} onChange={(e) => setFamilyName(e.target.value)} required />
+            <InputField id="fullName" type="text" label="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
             <InputField id="email" type="email" label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <InputField id="password" type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             <InputField id="confirmPassword" type="password" label="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
@@ -147,8 +182,7 @@ const InputField: React.FC<InputFieldProps> = ({ id, label, ...props }) => (
         <label htmlFor={id} className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
         <input 
             id={id}
-            className="block w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-md text-sm shadow-sm placeholder-slate-400
-            focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400 transition-shadow duration-300 ease-in-out"
+            className="block w-full px-3 py-2 text-sm shadow-sm"
             {...props}
         />
     </div>
@@ -158,7 +192,7 @@ const AuthButton: React.FC<{isLoading: boolean, children: React.ReactNode}> = ({
     <motion.button
         type="submit"
         disabled={isLoading}
-        className="w-full mt-4 inline-flex justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm rounded-md animated-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-400 dark:focus:ring-offset-slate-900 disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full mt-4 button animated-button disabled:opacity-70 disabled:cursor-not-allowed"
         whileHover={{ scale: isLoading ? 1 : 1.05, y: isLoading ? 0 : -2 }}
         whileTap={{ scale: isLoading ? 1 : 0.95 }}
     >

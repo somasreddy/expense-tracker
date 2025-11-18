@@ -1,10 +1,13 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector } from 'recharts';
 import { Category } from '../types';
 import { formatToINR } from '../services/expenseService';
 
 interface ExpenseChartProps {
   categoryTotals: { [key in Category]?: number };
+  onCategoryClick: (category: Category) => void;
+  activeCategory: Category | null;
 }
 
 const COLORS = [
@@ -15,13 +18,16 @@ const COLORS = [
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
-    const { name, value } = payload[0].payload;
-    const percent = payload[0].percent;
+    const data = payload[0];
+    // FIX: Check if `percent` is a valid number to prevent NaN display.
+    if (typeof data.percent !== 'number') {
+      return null;
+    }
     return (
       <div className="p-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-lg shadow-lg text-sm">
-        <p className="font-bold text-white">{name}</p>
-        <p className="text-slate-300">{`Amount: ${formatToINR(value)}`}</p>
-        <p className="text-slate-400">{`Percentage: ${(percent * 100).toFixed(2)}%`}</p>
+        <p className="font-bold text-white">{data.name}</p>
+        <p className="text-slate-300">{`Amount: ${formatToINR(data.value)}`}</p>
+        <p className="text-slate-400">{`Percentage: ${(data.percent * 100).toFixed(2)}%`}</p>
       </div>
     );
   }
@@ -51,22 +57,25 @@ const renderActiveShape = (props: any) => {
 };
 
 
-const ExpenseChart: React.FC<ExpenseChartProps> = ({ categoryTotals }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const onPieEnter = useCallback((_: any, index: number) => {
-    setActiveIndex(index);
-  }, [setActiveIndex]);
-
-  const chartData = Object.entries(categoryTotals)
+const ExpenseChart: React.FC<ExpenseChartProps> = ({ categoryTotals, onCategoryClick, activeCategory }) => {
+  const chartData = useMemo(() => Object.entries(categoryTotals)
     // FIX: Explicitly convert the value to a number to prevent type errors in subsequent filter and sort operations.
-    .map(([name, value]) => ({ name, value: Number(value) || 0 }))
+    .map(([name, value]) => ({ name: name as Category, value: Number(value) || 0 }))
     .filter(item => item.value > 0)
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => b.value - a.value), [categoryTotals]);
+
+  const activeIndex = useMemo(() => {
+    if (!activeCategory) return -1; // No active slice
+    return chartData.findIndex(d => d.name === activeCategory);
+  }, [activeCategory, chartData]);
 
   if (chartData.length === 0) {
     return <p className="text-center text-slate-400 py-10">No data to display in chart.</p>;
   }
+
+  const handlePieClick = (data: any, index: number) => {
+    onCategoryClick(data.name);
+  };
 
   return (
     <div style={{ width: '100%', height: 300 }}>
@@ -84,10 +93,11 @@ const ExpenseChart: React.FC<ExpenseChartProps> = ({ categoryTotals }) => {
             fill="#8884d8"
             dataKey="value"
             nameKey="name"
-            onMouseEnter={onPieEnter}
+            onClick={handlePieClick}
+            onMouseLeave={() => {}} // Disable mouse leave event to keep slice active
           >
             {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ outline: 'none' }}/>
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ outline: 'none', cursor: 'pointer' }}/>
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Account } from '../types';
@@ -16,10 +17,10 @@ const ProfileSelector: React.FC<AccountSelectorProps> = ({ accounts, currentAcco
         <select
           value={currentAccountId || 'all'}
           onChange={(e) => onSelectAccount(e.target.value)}
-          className="appearance-none block w-full pl-3 pr-10 py-2 bg-slate-700/50 border border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-500 transition-shadow duration-300 ease-in-out"
-          aria-label="Select an account"
+          className="appearance-none block w-full pl-3 pr-10 py-2 text-sm shadow-sm"
+          aria-label="Select a profile"
         >
-          <option value="all">All Accounts</option>
+          <option value="all">All Profiles</option>
           {accounts.map(account => (
             <option key={account.id} value={account.id}>
               {account.name}
@@ -32,11 +33,11 @@ const ProfileSelector: React.FC<AccountSelectorProps> = ({ accounts, currentAcco
       </div>
       <motion.button
         onClick={onManageAccounts}
-        className="inline-flex justify-center py-2 px-4 border border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-200 bg-slate-700/80 hover:bg-slate-600/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
+        className="button button-secondary"
         whileHover={{ scale: 1.05, y: -2, boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)" }}
         whileTap={{ scale: 0.95 }}
       >
-        Manage Accounts
+        Manage Profiles
       </motion.button>
     </div>
   );

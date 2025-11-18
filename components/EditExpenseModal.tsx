@@ -67,7 +67,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({ expense, onUpdate, 
                 id="editExpenseName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-shadow duration-300 ease-in-out"
+                className="mt-1 block w-full px-3 py-2 text-sm shadow-sm"
               />
             </div>
             <div>
@@ -79,7 +79,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({ expense, onUpdate, 
                 id="editAmount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-shadow duration-300 ease-in-out"
+                className="mt-1 block w-full px-3 py-2 text-sm shadow-sm"
               />
             </div>
             <div>
@@ -90,7 +90,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({ expense, onUpdate, 
                 id="editCategory"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-500 transition-shadow duration-300 ease-in-out"
+                className="mt-1 block w-full px-3 py-2 text-sm shadow-sm"
               >
                 {Categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -103,7 +103,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({ expense, onUpdate, 
             <motion.button
               type="button"
               onClick={onCancel}
-              className="py-2 px-4 border border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-200 bg-slate-700/80 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-offset-slate-800 transition-colors"
+              className="button button-secondary"
               whileHover={{ scale: 1.05, y: -2, boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)" }}
               whileTap={{ scale: 0.95 }}
             >
@@ -111,7 +111,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({ expense, onUpdate, 
             </motion.button>
             <motion.button
               type="submit"
-              className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white animated-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-offset-slate-800"
+              className="button animated-button"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
             >

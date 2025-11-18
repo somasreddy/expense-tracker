@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Account } from '../types';
@@ -22,11 +23,11 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
 
   const handleAddAccount = () => {
     if (!newAccountName.trim()) {
-      setAddError('Account name cannot be empty.');
+      setAddError('Profile name cannot be empty.');
       return;
     }
     if (accounts.some(p => p.name.toLowerCase() === newAccountName.trim().toLowerCase())) {
-        setAddError('An account with this name already exists.');
+        setAddError('A profile with this name already exists.');
         return;
     }
     onAddAccount(newAccountName.trim());
@@ -49,11 +50,11 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
 
   const handleSaveEdit = (accountId: string) => {
     if (!editingName.trim()) {
-      setEditError('Account name cannot be empty.');
+      setEditError('Profile name cannot be empty.');
       return;
     }
     if (accounts.some(p => p.id !== accountId && p.name.toLowerCase() === editingName.trim().toLowerCase())) {
-      setEditError('An account with this name already exists.');
+      setEditError('A profile with this name already exists.');
       return;
     }
     onUpdateAccount(accountId, editingName.trim());
@@ -77,21 +78,21 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-4 text-white">Manage Accounts</h2>
+          <h2 className="text-2xl font-bold mb-4 text-white">Manage Profiles</h2>
           
           <div className="mb-6">
-            <h3 className="text-lg font-medium mb-2 text-slate-200">Add New Account</h3>
+            <h3 className="text-lg font-medium mb-2 text-slate-200">Add New Profile</h3>
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={newAccountName}
                 onChange={(e) => setNewAccountName(e.target.value)}
                 placeholder="e.g., Business Card"
-                className="flex-grow mt-1 block w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="flex-grow mt-1 block w-full px-3 py-2 text-sm shadow-sm"
               />
               <motion.button
                 onClick={handleAddAccount}
-                className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium animated-button"
+                className="button animated-button"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -102,7 +103,7 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-medium mb-2 text-slate-200">Existing Accounts</h3>
+            <h3 className="text-lg font-medium mb-2 text-slate-200">Existing Profiles</h3>
             <ul className="space-y-2 max-h-60 overflow-y-auto pr-2 -mr-2">
               <AnimatePresence>
                 {accounts.map(account => (
@@ -122,14 +123,14 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
                             type="text"
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
-                            className="flex-grow w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                            className="flex-grow w-full px-2 py-1 text-sm text-white"
                             autoFocus
                             onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(account.id)}
                           />
-                          <motion.button onClick={() => handleSaveEdit(account.id)} className="text-green-400 hover:text-green-300 p-1" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} aria-label="Save account name">
+                          <motion.button onClick={() => handleSaveEdit(account.id)} className="text-green-400 hover:text-green-300 p-1" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} aria-label="Save profile name">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                           </motion.button>
-                          <motion.button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300 p-1" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} aria-label="Cancel editing account name">
+                          <motion.button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300 p-1" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} aria-label="Cancel editing profile name">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                           </motion.button>
                         </div>
@@ -139,7 +140,7 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
                       <div className="flex justify-between items-center w-full">
                         <span className="text-slate-200">{account.name}</span>
                         <div className="flex items-center gap-2">
-                           <motion.button onClick={() => handleStartEdit(account)} className="text-slate-400 hover:text-amber-300 p-1 rounded-full" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} aria-label={`Edit account ${account.name}`}>
+                           <motion.button onClick={() => handleStartEdit(account)} className="text-slate-400 hover:text-amber-300 p-1 rounded-full" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} aria-label={`Edit profile ${account.name}`}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" /></svg>
                           </motion.button>
                           <motion.button
@@ -153,8 +154,8 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
                             whileTap={accounts.length > 1 ? { scale: 0.9 } : {}}
                             aria-label={
                               accounts.length > 1
-                                ? `Delete account ${account.name}`
-                                : "Cannot delete the last account"
+                                ? `Delete profile ${account.name}`
+                                : "Cannot delete the last profile"
                             }
                             disabled={accounts.length <= 1}
                           >
@@ -174,7 +175,7 @@ const ProfileManagerModal: React.FC<AccountManagerModalProps> = ({ isOpen, onClo
           <div className="flex justify-end">
             <motion.button
               onClick={onClose}
-              className="py-2 px-4 border border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-200 bg-slate-700/80 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+              className="button button-secondary"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

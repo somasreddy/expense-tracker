@@ -41,8 +41,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g., Coffee with friends"
-          className="mt-1 block w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-md text-sm shadow-sm placeholder-slate-400
-            focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400 transition-shadow duration-300 ease-in-out"
+          className="mt-1 block w-full px-3 py-2 text-sm shadow-sm"
         />
       </div>
       <div>
@@ -55,14 +54,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="e.g., 250"
-          className="mt-1 block w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-md text-sm shadow-sm placeholder-slate-400
-            focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400 transition-shadow duration-300 ease-in-out"
+          className="mt-1 block w-full px-3 py-2 text-sm shadow-sm"
         />
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
       <motion.button
         type="submit"
-        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm rounded-md animated-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-400 dark:focus:ring-offset-slate-900"
+        className="w-full button animated-button"
         whileHover={{ scale: 1.05, y: -2 }}
         whileTap={{ scale: 0.95 }}
       >

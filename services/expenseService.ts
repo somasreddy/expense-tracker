@@ -1,19 +1,32 @@
+
 import { Expense, Account, AppData, Category } from '../types';
 import { CATEGORY_KEYWORDS } from '../constants';
+import { auth, db, doc, getDoc, setDoc } from '../firebase';
 
 const OLD_STORAGE_KEY = 'expenseCalculator_expenses';
 const NEW_STORAGE_KEY = 'expenseCalculator_appData';
 
-export const saveData = (data: AppData): void => {
+const getAppDataDocRef = () => {
+  const user = auth.currentUser;
+  if (!user) return null;
+  // Use a consistent document ID for the user's app data
+  return doc(db, 'users', user.uid, 'appData', 'main');
+};
+
+export const saveData = async (data: AppData): Promise<void> => {
   try {
-    const serializedData = JSON.stringify(data);
-    localStorage.setItem(NEW_STORAGE_KEY, serializedData);
+    const docRef = getAppDataDocRef();
+    if (docRef) {
+      await setDoc(docRef, data);
+    }
+    // Also write to localStorage so the UI can feel snappy, but Firestore is the source of truth.
+    localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error("Failed to save app data to localStorage", error);
+    console.error("Failed to save app data", error);
   }
 };
 
-export const loadData = (): AppData => {
+const loadDataFromLocalStorage = (): AppData | null => {
   try {
     const data = localStorage.getItem(NEW_STORAGE_KEY);
     if (data) {
@@ -54,7 +67,7 @@ export const loadData = (): AppData => {
         expenses: newExpenses,
       };
       
-      saveData(migratedData);
+      localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(migratedData));
       localStorage.removeItem(OLD_STORAGE_KEY);
       return migratedData;
     }
@@ -62,14 +75,61 @@ export const loadData = (): AppData => {
   } catch (error) {
     console.error("Failed to load or parse data from localStorage", error);
   }
-  
-  // Return default structure if nothing is found
+  return null;
+};
+
+const getDefaultData = (): AppData => {
   const defaultAccount: Account = { id: 'default-account-1', name: 'Personal' };
-  const defaultData: AppData = {
-      accounts: [defaultAccount],
-      expenses: [],
+  return {
+    accounts: [defaultAccount],
+    expenses: [],
   };
-  return defaultData;
+};
+
+const sortExpenses = (data: AppData): AppData => {
+  if (data && data.expenses) {
+    data.expenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+  return data;
+}
+
+export const loadData = async (): Promise<AppData> => {
+  const docRef = getAppDataDocRef();
+  if (!docRef) {
+    // User not logged in, they can only see local data if any exists.
+    const localData = loadDataFromLocalStorage() || getDefaultData();
+    return sortExpenses(localData);
+  }
+
+  try {
+    const docSnap = await getDoc(docRef);
+
+    // Primary source of truth: Firestore
+    if (docSnap.exists()) {
+      console.log("Data loaded from Firestore.");
+      const firestoreData = docSnap.data() as AppData;
+      return sortExpenses(firestoreData);
+    }
+
+    // If no Firestore data, check localStorage for a one-time migration
+    console.log("No data in Firestore. Checking localStorage for migration.");
+    const localData = loadDataFromLocalStorage();
+
+    // Check if local data is meaningful (not just the default empty state)
+    if (localData && (localData.expenses.length > 0 || localData.accounts.length > 1 || (localData.accounts.length === 1 && localData.accounts[0].name !== 'Personal'))) {
+      console.log("Found local data to migrate to Firestore.");
+      await saveData(localData); // This saves it to Firestore and local cache
+      return sortExpenses(localData);
+    }
+  } catch (error) {
+    console.error("Failed to load data from Firestore, falling back to local storage.", error);
+    const fallbackData = loadDataFromLocalStorage() || getDefaultData();
+    return sortExpenses(fallbackData);
+  }
+
+  // If nothing found anywhere, return default.
+  console.log("No user data found. Returning default structure.");
+  return getDefaultData(); // Already sorted (empty)
 };
 
 export const categorizeExpense = (expenseName: string): Category => {

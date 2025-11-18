@@ -13,7 +13,10 @@
     "react-dom": "^19.2.0",
     "recharts": "^3.4.1",
     "framer-motion": "^11.3.19",
-    "firebase": "^12.6.0"
+    "firebase": "^12.6.0",
+    "@firebase/firestore": "^4.9.2",
+    "@firebase/app": "^0.14.6",
+    "@firebase/auth": "^1.11.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
