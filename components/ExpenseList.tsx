@@ -47,8 +47,15 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDeleteExpense, on
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
-            whileHover={{ scale: 1.03, zIndex: 1, position: 'relative', boxShadow: "0px 5px 10px rgba(0,0,0,0.1)" }}
-            className="flex items-center justify-between p-4 bg-slate-50/70 dark:bg-slate-800/40 rounded-lg shadow-sm hover:bg-slate-100/80 dark:hover:bg-slate-700/60 transition-all"
+            whileHover={{ 
+              scale: 1.03, 
+              y: -5,
+              zIndex: 1, 
+              position: 'relative', 
+              boxShadow: "0px 8px 15px rgba(0,0,0,0.15)" 
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            className="flex items-center justify-between p-4 bg-slate-50/70 dark:bg-slate-800/40 rounded-lg shadow-sm hover:bg-slate-100/80 dark:hover:bg-slate-700/60 transition-colors duration-200"
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{expense.name}</p>
@@ -57,27 +64,30 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDeleteExpense, on
                 {expense.category}
               </span>
             </div>
-            <div className="text-right ml-4 flex-shrink-0 flex items-center space-x-2">
-              <p className="text-sm font-medium text-slate-900 dark:text-white">{formatToINR(expense.amount)}</p>
-              <button
-                onClick={() => onEditExpense(expense)}
-                className="text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
-                aria-label={`Edit expense: ${expense.name}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                  <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <button
-                onClick={() => onDeleteExpense(expense.id)}
-                className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                aria-label={`Delete expense: ${expense.name}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </button>
+            <div className="flex items-center ml-4">
+               <p className="text-sm font-medium text-slate-900 dark:text-white mr-4 w-24 text-right">{formatToINR(expense.amount)}</p>
+                <div className="flex items-center space-x-2">
+                    <motion.button
+                        onClick={() => onEditExpense(expense)}
+                        className="text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-100/70 dark:bg-sky-900/50 hover:bg-sky-200/70 dark:hover:bg-sky-800/70 rounded-md px-3 py-1 transition-colors duration-200"
+                        aria-label={`Edit expense: ${expense.name}`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        Edit
+                    </motion.button>
+                    <motion.button
+                        onClick={() => onDeleteExpense(expense.id)}
+                        className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded-full transition-colors duration-200"
+                        aria-label={`Delete expense: ${expense.name}`}
+                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                        whileTap={{ scale: 0.9 }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    </motion.button>
+                </div>
             </div>
           </motion.li>
         ))}
