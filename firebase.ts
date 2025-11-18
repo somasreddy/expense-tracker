@@ -2,16 +2,18 @@
 import { initializeApp } from "firebase/app";
 // FIX: Switched to getAuth and setPersistence for wider Firebase v9 SDK compatibility.
 // This resolves errors where `initializeAuth` and the `User` type are not exported in older v9 versions.
-import {
+// FIX: Use a namespace import to resolve module export errors in older Firebase v9 SDKs.
+import * as fbAuth from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+
+const {
   getAuth,
   onAuthStateChanged,
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
-  // FIX: `setPersistence`, `browserLocalPersistence`, and `User` type are removed for compatibility with older Firebase v9 SDK versions that do not export them.
-} from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+} = fbAuth;
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries

@@ -1,4 +1,5 @@
 
+
 import React, { useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Expense } from '../types';
@@ -100,7 +101,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
         <input
           type="checkbox"
           checked={isAllSelected}
-          onChange={onToggleSelectAll}
+          // FIX: Wrap onToggleSelectAll in an arrow function to prevent passing the event object, matching the prop's expected signature.
+          onChange={() => onToggleSelectAll()}
           aria-label="Select all expenses"
           className="h-4 w-4 rounded bg-slate-700 border-slate-500 text-amber-400 focus:ring-amber-500"
         />
