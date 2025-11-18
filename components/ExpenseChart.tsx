@@ -8,9 +8,9 @@ interface ExpenseChartProps {
 }
 
 const COLORS = [
-  '#0ea5e9', '#8b5cf6', '#ec4899', '#f97316', '#10b981', 
-  '#eab308', '#6366f1', '#d946ef', '#14b8a6', '#f43f5e',
-  '#6b7280', '#84cc16'
+  '#facc15', '#fb923c', '#fb7185', '#c084fc', '#818cf8', 
+  '#60a5fa', '#34d399', '#a3e635', '#f87171', '#d946ef',
+  '#14b8a6', '#6b7280'
 ];
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -18,10 +18,10 @@ const CustomTooltip = ({ active, payload }: any) => {
     const { name, value } = payload[0].payload;
     const percent = payload[0].percent;
     return (
-      <div className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg text-sm">
-        <p className="font-bold text-slate-900 dark:text-white">{name}</p>
-        <p className="text-slate-600 dark:text-slate-300">{`Amount: ${formatToINR(value)}`}</p>
-        <p className="text-slate-500 dark:text-slate-400">{`Percentage: ${(percent * 100).toFixed(2)}%`}</p>
+      <div className="p-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-lg shadow-lg text-sm">
+        <p className="font-bold text-white">{name}</p>
+        <p className="text-slate-300">{`Amount: ${formatToINR(value)}`}</p>
+        <p className="text-slate-400">{`Percentage: ${(percent * 100).toFixed(2)}%`}</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ const renderActiveShape = (props: any) => {
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
-        style={{ filter: `drop-shadow(0 4px 8px ${fill}A0)` }} // 3D shadow
+        style={{ filter: `drop-shadow(0 0 15px ${fill})` }} // 3D glow
       />
     </g>
   );
@@ -65,7 +65,7 @@ const ExpenseChart: React.FC<ExpenseChartProps> = ({ categoryTotals }) => {
     .sort((a, b) => b.value - a.value);
 
   if (chartData.length === 0) {
-    return <p className="text-center text-slate-500 dark:text-slate-400 py-10">No data to display in chart.</p>;
+    return <p className="text-center text-slate-400 py-10">No data to display in chart.</p>;
   }
 
   return (
@@ -100,7 +100,7 @@ const ExpenseChart: React.FC<ExpenseChartProps> = ({ categoryTotals }) => {
               fontSize: '12px',
               color: '#475569',
             }}
-            formatter={(value, entry, index) => <span className="text-slate-600 dark:text-slate-300">{value}</span>}
+            formatter={(value, entry, index) => <span className="text-slate-300">{value}</span>}
           />
         </PieChart>
       </ResponsiveContainer>

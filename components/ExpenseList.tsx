@@ -9,30 +9,31 @@ interface ExpenseListProps {
   onEditExpense: (expense: Expense) => void;
 }
 
-const categoryColors: { [key: string]: string } = {
-  Grocery: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
-  Fuel: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
-  Bills: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-  Shopping: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
-  Food: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
-  Transportation: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300',
-  Entertainment: 'bg-pink-100 text-pink-800 dark:bg-pink-900/50 dark:text-pink-300',
-  Health: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
-  Utilities: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300',
-  Rent: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
-  EMIs: 'bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300',
-  Others: 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300',
+const categoryStyles: { [key: string]: { border: string; text: string; bg: string; shadow: string; } } = {
+  Grocery: { border: 'border-green-500', text: 'text-green-300', bg: 'bg-green-900/30', shadow: 'rgba(74, 222, 128, 0.3)' },
+  Fuel: { border: 'border-red-500', text: 'text-red-300', bg: 'bg-red-900/30', shadow: 'rgba(248, 113, 113, 0.3)' },
+  Bills: { border: 'border-blue-500', text: 'text-blue-300', bg: 'bg-blue-900/30', shadow: 'rgba(96, 165, 250, 0.3)' },
+  Shopping: { border: 'border-purple-500', text: 'text-purple-300', bg: 'bg-purple-900/30', shadow: 'rgba(192, 132, 252, 0.3)' },
+  Food: { border: 'border-yellow-500', text: 'text-yellow-300', bg: 'bg-yellow-900/30', shadow: 'rgba(250, 204, 21, 0.3)' },
+  Transportation: { border: 'border-indigo-500', text: 'text-indigo-300', bg: 'bg-indigo-900/30', shadow: 'rgba(129, 140, 248, 0.3)' },
+  Entertainment: { border: 'border-pink-500', text: 'text-pink-300', bg: 'bg-pink-900/30', shadow: 'rgba(244, 114, 182, 0.3)' },
+  Health: { border: 'border-teal-500', text: 'text-teal-300', bg: 'bg-teal-900/30', shadow: 'rgba(45, 212, 191, 0.3)' },
+  Utilities: { border: 'border-cyan-500', text: 'text-cyan-300', bg: 'bg-cyan-900/30', shadow: 'rgba(34, 211, 238, 0.3)' },
+  Rent: { border: 'border-orange-500', text: 'text-orange-300', bg: 'bg-orange-900/30', shadow: 'rgba(251, 146, 60, 0.3)' },
+  EMIs: { border: 'border-gray-500', text: 'text-gray-300', bg: 'bg-gray-800/30', shadow: 'rgba(156, 163, 175, 0.3)' },
+  Others: { border: 'border-slate-500', text: 'text-slate-300', bg: 'bg-slate-800/30', shadow: 'rgba(100, 116, 139, 0.3)' },
 };
+
 
 const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDeleteExpense, onEditExpense }) => {
   if (expenses.length === 0) {
     return (
         <div className="text-center py-10">
-            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-slate-900 dark:text-white">No expenses found</h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Try adjusting your filters or adding a new expense.</p>
+            <h3 className="mt-2 text-sm font-medium text-white">No expenses found</h3>
+            <p className="mt-1 text-sm text-slate-400">Try adjusting your filters or adding a new expense.</p>
         </div>
     )
   }
@@ -40,7 +41,9 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDeleteExpense, on
   return (
     <ul className="space-y-3 max-h-[600px] overflow-y-auto pr-2 -mr-2">
       <AnimatePresence>
-        {expenses.map((expense) => (
+        {expenses.map((expense) => {
+          const style = categoryStyles[expense.category] || categoryStyles['Others'];
+          return (
           <motion.li
             key={expense.id}
             layout
@@ -52,33 +55,35 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDeleteExpense, on
               y: -5,
               zIndex: 1, 
               position: 'relative', 
-              boxShadow: "0px 8px 15px rgba(0,0,0,0.15)" 
+              boxShadow: `0px 10px 20px rgba(0,0,0,0.25), 0 0 20px ${style.shadow}` 
             }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            className="flex items-center justify-between p-4 bg-slate-50/70 dark:bg-slate-800/40 rounded-lg shadow-sm hover:bg-slate-100/80 dark:hover:bg-slate-700/60 transition-colors duration-200"
+            transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+            className={`flex items-center justify-between p-4 bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-md hover:bg-slate-800/80 border border-white/10 border-l-4 ${style.border} transition-colors duration-200`}
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{expense.name}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{expense.date}</p>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${categoryColors[expense.category] || categoryColors['Others']}`}>
+              <p className="text-sm font-semibold text-white truncate">{expense.name}</p>
+              <p className="text-xs text-slate-400">{expense.date}</p>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${style.bg} ${style.text}`}>
                 {expense.category}
               </span>
             </div>
             <div className="flex items-center ml-4">
-               <p className="text-sm font-medium text-slate-900 dark:text-white mr-4 w-24 text-right">{formatToINR(expense.amount)}</p>
+               <p className="text-sm font-medium text-white mr-4 w-24 text-right">{formatToINR(expense.amount)}</p>
                 <div className="flex items-center space-x-2">
                     <motion.button
                         onClick={() => onEditExpense(expense)}
-                        className="text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-100/70 dark:bg-sky-900/50 hover:bg-sky-200/70 dark:hover:bg-sky-800/70 rounded-md px-3 py-1 transition-colors duration-200"
+                        className="text-slate-400 hover:text-amber-300 p-1 rounded-full transition-colors duration-200"
                         aria-label={`Edit expense: ${expense.name}`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(251, 191, 36, 0.1)' }}
+                        whileTap={{ scale: 0.9 }}
                     >
-                        Edit
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
+                        </svg>
                     </motion.button>
                     <motion.button
                         onClick={() => onDeleteExpense(expense.id)}
-                        className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded-full transition-colors duration-200"
+                        className="text-slate-400 hover:text-red-400 p-1 rounded-full transition-colors duration-200"
                         aria-label={`Delete expense: ${expense.name}`}
                         whileHover={{ scale: 1.1, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
                         whileTap={{ scale: 0.9 }}
@@ -90,7 +95,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDeleteExpense, on
                 </div>
             </div>
           </motion.li>
-        ))}
+        )})}
       </AnimatePresence>
     </ul>
   );

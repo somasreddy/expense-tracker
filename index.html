@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>React Expense Calculator</title>
+    <title>React Expense Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">
 {
@@ -18,36 +18,56 @@
 }
 </script>
 <style>
-  body {
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  :root {
+    --bg-color-start: #0f0c29;
+    --bg-color-mid: #302b63;
+    --bg-color-end: #24243e;
+    --accent-color-1: #fde047; /* yellow-300 */
+    --accent-color-2: #fbbf24; /* amber-400 */
   }
 
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+  body {
+    background: var(--bg-color-mid);
+    color: #e5e7eb;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(125deg, var(--bg-color-start), var(--bg-color-mid), var(--bg-color-end));
+    background-size: 400% 400%;
+    animation: gradient-animation 20s ease infinite;
+    z-index: -1;
+  }
+  
+  @keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
   .animated-button {
-    background-image: linear-gradient(to right, #0ea5e9 0%, #6366f1 50%, #d946ef 100%);
+    background-image: linear-gradient(to right, var(--accent-color-2) 0%, var(--accent-color-1) 50%, var(--accent-color-2) 100%);
     background-size: 200% auto;
-    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
-    color: white;
+    transition: all 0.4s cubic-bezier(.25,.8,.25,1);
+    color: #1f2937; /* Dark text for contrast */
+    font-weight: 600;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
   }
 
   .animated-button:hover {
     background-position: right center;
-    box-shadow: 0 7px 15px rgba(99, 102, 241, 0.4);
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3);
   }
 </style>
 </head>

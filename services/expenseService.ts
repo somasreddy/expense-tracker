@@ -1,46 +1,74 @@
-
-import { Expense, Category } from '../types';
+// FIX: Import the 'Category' type to resolve TypeScript errors in this file.
+import { Expense, Profile, AppData, Category } from '../types';
 import { CATEGORY_KEYWORDS } from '../constants';
 
-const STORAGE_KEY = 'expenseCalculator_expenses';
+const OLD_STORAGE_KEY = 'expenseCalculator_expenses';
+const NEW_STORAGE_KEY = 'expenseCalculator_appData';
 
-export const saveExpenses = (expenses: Expense[]): void => {
+export const saveData = (data: AppData): void => {
   try {
-    const data = JSON.stringify(expenses);
-    localStorage.setItem(STORAGE_KEY, data);
+    const serializedData = JSON.stringify(data);
+    localStorage.setItem(NEW_STORAGE_KEY, serializedData);
   } catch (error) {
-    console.error("Failed to save expenses to localStorage", error);
+    console.error("Failed to save app data to localStorage", error);
   }
 };
 
-export const loadExpenses = (): Expense[] => {
+export const loadData = (): AppData => {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(NEW_STORAGE_KEY);
     if (data) {
       return JSON.parse(data);
     }
+
+    // Migration logic from old format
+    const oldData = localStorage.getItem(OLD_STORAGE_KEY);
+    if (oldData) {
+      console.log("Migrating old data to new format...");
+      const oldExpenses: Omit<Expense, 'profileId'>[] = JSON.parse(oldData);
+      const defaultProfile: Profile = { id: 'default-profile-1', name: 'Personal' };
+      
+      const newExpenses: Expense[] = oldExpenses.map(exp => ({
+        ...exp,
+        profileId: defaultProfile.id,
+      }));
+      
+      const migratedData: AppData = {
+        profiles: [defaultProfile],
+        expenses: newExpenses,
+      };
+      
+      saveData(migratedData);
+      localStorage.removeItem(OLD_STORAGE_KEY);
+      return migratedData;
+    }
+
   } catch (error) {
-    console.error("Failed to load or parse expenses from localStorage", error);
+    console.error("Failed to load or parse data from localStorage", error);
   }
-  return [];
+  
+  // Return default structure if nothing is found
+  const defaultProfile: Profile = { id: 'default-profile-1', name: 'Personal' };
+  const defaultData: AppData = {
+      profiles: [defaultProfile],
+      expenses: [],
+  };
+  return defaultData;
 };
 
 export const categorizeExpense = (expenseName: string): Category => {
     const lowerCaseName = expenseName.toLowerCase();
-
-    // Prioritize categories with more specific keywords
-    const categoryPriority: Category[] = [
+    const categoryPriority = [
         'EMIs', 'Rent', 'Bills', 'Utilities', 'Fuel', 'Health',
         'Grocery', 'Food', 'Transportation', 'Entertainment', 'Shopping', 'Others'
     ];
 
     for (const category of categoryPriority) {
-        const keywords = CATEGORY_KEYWORDS[category];
+        const keywords = CATEGORY_KEYWORDS[category as Category];
         if (keywords.some(keyword => lowerCaseName.includes(keyword))) {
-            return category;
+            return category as Category;
         }
     }
-
     return 'Others';
 };
 
