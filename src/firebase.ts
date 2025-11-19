@@ -1,4 +1,4 @@
-// firebase.ts
+// src/firebase.ts
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -29,13 +29,12 @@ const firebaseConfig = {
   measurementId: "G-3HHPKLFJ62",
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 // Auth
 export const auth = getAuth(app);
 
-// 🔐 Persist login across refreshes & GitHub Pages deployments
+// Persist login across refresh & deployments
 setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error("Failed to set auth persistence", error);
 });
@@ -43,7 +42,7 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
 // Firestore
 export const db = getFirestore(app);
 
-// Re-export frequently used Firebase & Firestore helpers
+// Re-exports
 export {
   onAuthStateChanged,
   signOut,
