@@ -52,9 +52,9 @@ const App: React.FC = () => {
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // --------------------------
-  // AUTH LISTENER
-  // --------------------------
+  /* --------------------------------------
+     AUTH LISTENER
+  -------------------------------------- */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -63,9 +63,9 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // --------------------------
-  // PAGE TITLE
-  // --------------------------
+  /* --------------------------------------
+     PAGE TITLE
+  -------------------------------------- */
   useEffect(() => {
     if (user?.displayName) {
       document.title = `${user.displayName}'s Expense Tracker`;
@@ -74,9 +74,9 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  // --------------------------
-  // LOAD DATA
-  // --------------------------
+  /* --------------------------------------
+     LOAD DATA (CACHE → FIRESTORE)
+  -------------------------------------- */
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
@@ -107,9 +107,9 @@ const App: React.FC = () => {
     fetchData();
   }, [user]);
 
-  // --------------------------
-  // AUTO-SAVE WHEN DATA CHANGES
-  // --------------------------
+  /* --------------------------------------
+     AUTO-SAVE When Data Changes
+  -------------------------------------- */
   useEffect(() => {
     if (!user || authLoading || dataLoading) return;
 
@@ -123,9 +123,9 @@ const App: React.FC = () => {
     }
   }, [masterExpenses, accounts, user, authLoading, dataLoading]);
 
-  // --------------------------
-  // ADD EXPENSE (FULL FIRESTORE PERSISTENCE)
-  // --------------------------
+  /* --------------------------------------
+     ADD EXPENSE
+  -------------------------------------- */
   const handleAddExpense = async (name: string, amount: number) => {
     if (currentAccountId === "all" || !currentAccountId) {
       alert("Please select a specific profile to add an expense.");
@@ -143,9 +143,9 @@ const App: React.FC = () => {
     setAccounts(updated.accounts);
   };
 
-  // --------------------------
-  // UPDATE EXPENSE
-  // --------------------------
+  /* --------------------------------------
+     UPDATE EXPENSE
+  -------------------------------------- */
   const handleUpdateExpense = async (updatedExpense: Expense) => {
     const updated = await updateExpenseInData(
       { expenses: masterExpenses, accounts },
@@ -157,9 +157,9 @@ const App: React.FC = () => {
     setEditingExpense(null);
   };
 
-  // --------------------------
-  // DELETE EXPENSE
-  // --------------------------
+  /* --------------------------------------
+     DELETE EXPENSE
+  -------------------------------------- */
   const handleDeleteExpense = async (id: string) => {
     const updated = await deleteExpenseFromData(
       { expenses: masterExpenses, accounts },
@@ -170,9 +170,27 @@ const App: React.FC = () => {
     setAccounts(updated.accounts);
   };
 
-  // --------------------------
-  // ACCOUNT MANAGEMENT
-  // --------------------------
+  /* --------------------------------------
+     DELETE SELECTED EXPENSES  (🔥 FIXED)
+  -------------------------------------- */
+  const handleDeleteSelectedExpenses = async () => {
+    if (selectedExpenses.length === 0) return;
+
+    const confirmDelete = window.confirm(
+      `Delete ${selectedExpenses.length} selected expenses?`
+    );
+    if (!confirmDelete) return;
+
+    for (const id of selectedExpenses) {
+      await handleDeleteExpense(id);
+    }
+
+    setSelectedExpenses([]);
+  };
+
+  /* --------------------------------------
+     ACCOUNT MANAGEMENT
+  -------------------------------------- */
   const handleAddAccount = (name: string) => {
     const newAccount: Account = { id: `${Date.now()}`, name };
     setAccounts((prev) => [...prev, newAccount]);
@@ -208,18 +226,18 @@ const App: React.FC = () => {
     );
   };
 
-  // --------------------------
-  // FILTERS & CATEGORY
-  // --------------------------
+  /* --------------------------------------
+     FILTERS
+  -------------------------------------- */
   const handleSetFilter = (start: string, end: string) => setFilter({ start, end });
   const handleClearFilter = () => setFilter({ start: null, end: null });
 
-  const handleSetCategoryFilter = (category: Category) =>
-    setCategoryFilter((prev) => (prev === category ? null : category));
+  const handleSetCategoryFilter = (cat: Category) =>
+    setCategoryFilter((prev) => (prev === cat ? null : cat));
 
-  // --------------------------
-  // SELECTION
-  // --------------------------
+  /* --------------------------------------
+     SELECTION LOGIC
+  -------------------------------------- */
   const handleToggleExpenseSelection = (id: string) => {
     setSelectedExpenses((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -230,9 +248,9 @@ const App: React.FC = () => {
     setSelectedExpenses(selectedExpenses.length === ids.length ? [] : ids);
   };
 
-  // --------------------------
-  // PAGINATION
-  // --------------------------
+  /* --------------------------------------
+     FILTERING + PAGINATION
+  -------------------------------------- */
   const masterFilteredExpenses = useMemo(() => {
     let temp = [...masterExpenses];
 
@@ -241,11 +259,11 @@ const App: React.FC = () => {
     }
 
     if (filter.start && filter.end) {
-      const s = new Date(filter.start);
-      const e = new Date(filter.end);
+      const start = new Date(filter.start);
+      const end = new Date(filter.end);
       temp = temp.filter((ex) => {
         const d = new Date(ex.date);
-        return d >= s && d <= e;
+        return d >= start && d <= end;
       });
     }
 
@@ -267,22 +285,22 @@ const App: React.FC = () => {
 
     setIsLoadingMore(true);
     setTimeout(() => {
-      const next = page + 1;
+      const nextPage = page + 1;
       const newItems = masterFilteredExpenses.slice(
         page * EXPENSES_PER_PAGE,
-        next * EXPENSES_PER_PAGE
+        nextPage * EXPENSES_PER_PAGE
       );
 
       setDisplayedExpenses((prev) => [...prev, ...newItems]);
-      setPage(next);
-      setHasMore(masterFilteredExpenses.length > next * EXPENSES_PER_PAGE);
+      setPage(nextPage);
+      setHasMore(masterFilteredExpenses.length > nextPage * EXPENSES_PER_PAGE);
       setIsLoadingMore(false);
     }, 300);
   }, [page, hasMore, isLoadingMore, masterFilteredExpenses]);
 
-  // --------------------------
-  // SIGN OUT
-  // --------------------------
+  /* --------------------------------------
+     SIGN OUT
+  -------------------------------------- */
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -291,9 +309,9 @@ const App: React.FC = () => {
     }
   };
 
-  // --------------------------
-  // UI
-  // --------------------------
+  /* --------------------------------------
+     LOADING UI
+  -------------------------------------- */
   if (authLoading || (user && dataLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -304,16 +322,22 @@ const App: React.FC = () => {
 
   if (!user) return <Auth />;
 
+  /* --------------------------------------
+     CATEGORY TOTALS
+  -------------------------------------- */
   const filteredTotal = masterFilteredExpenses.reduce((t, e) => t + e.amount, 0);
 
   const categoryTotals = useMemo(() => {
-    const totals: Record<Category, number> = {} as any;
+    const totals: any = {};
     masterFilteredExpenses.forEach((e) => {
       totals[e.category] = (totals[e.category] || 0) + e.amount;
     });
     return totals;
   }, [masterFilteredExpenses]);
 
+  /* --------------------------------------
+     UI
+  -------------------------------------- */
   return (
     <div className="min-h-screen text-slate-200 p-4 sm:p-6 lg:p-8 font-sans">
       <AnimatePresence>
@@ -369,8 +393,15 @@ const App: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               className="mt-4 text-sm text-slate-300"
             >
-              Showing expenses for <strong>{accounts.find(a => a.id === currentAccountId)?.name || "All Profiles"}</strong>. Total:{" "}
-              <span className="font-bold text-amber-300">{formatToINR(filteredTotal)}</span>
+              Showing expenses for{" "}
+              <strong>
+                {accounts.find((a) => a.id === currentAccountId)?.name ||
+                  "All Profiles"}
+              </strong>
+              . Total:{" "}
+              <span className="font-bold text-amber-300">
+                {formatToINR(filteredTotal)}
+              </span>
             </motion.div>
           ) : null}
         </header>
@@ -379,13 +410,19 @@ const App: React.FC = () => {
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           variants={{
             hidden: { opacity: 0 },
-            visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.2 }
+            }
           }}
           initial="hidden"
           animate="visible"
         >
           {/* LEFT COLUMN */}
-          <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="lg:col-span-1 space-y-6 content-surface p-6">
+          <motion.div
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+            className="lg:col-span-1 space-y-6 content-surface p-6"
+          >
             <h2 className="text-2xl font-bold text-white">Add New Expense</h2>
             <ExpenseForm onAddExpense={handleAddExpense} />
             <hr className="border-slate-700" />
@@ -393,9 +430,14 @@ const App: React.FC = () => {
           </motion.div>
 
           {/* RIGHT COLUMN */}
-          <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="lg:col-span-2 space-y-6">
+          <motion.div
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+            className="lg:col-span-2 space-y-6"
+          >
             <div className="content-surface p-6">
-              <h2 className="text-2xl font-bold text-white mb-4">Expense Analysis</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Expense Analysis
+              </h2>
               <ExpenseChart
                 categoryTotals={categoryTotals}
                 onCategoryClick={handleSetCategoryFilter}
@@ -426,13 +468,10 @@ const App: React.FC = () => {
                 onEditExpense={setEditingExpense}
                 selectedExpenses={selectedExpenses}
                 onToggleExpenseSelection={handleToggleExpenseSelection}
-                onToggleSelectAll={() => handleToggleSelectAll(masterFilteredExpenses.map(e => e.id))}
-                onDeleteSelected={() => {
-                  if (selectedExpenses.length > 0 && window.confirm(`Delete ${selectedExpenses.length} selected expenses?`)) {
-                    selectedExpenses.forEach((id) => handleDeleteExpense(id));
-                    setSelectedExpenses([]);
-                  }
-                }}
+                onToggleSelectAll={() =>
+                  handleToggleSelectAll(masterFilteredExpenses.map((e) => e.id))
+                }
+                onDeleteSelected={handleDeleteSelectedExpenses}
                 onLoadMore={loadMoreExpenses}
                 hasMore={hasMore}
                 isLoadingMore={isLoadingMore}
