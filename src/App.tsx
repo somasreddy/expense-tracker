@@ -2,7 +2,17 @@ import ThemeSwitcher from "./components/ThemeSwitcher";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Expense, Category, Account } from './types';
-import { loadData, saveData, categorizeExpense, formatToINR, loadCachedAppData } from './services/expenseService';
+import {
+  loadData,
+  saveData,
+  categorizeExpense,
+  formatToINR,
+  loadCachedAppData,
+  addExpenseToData,
+  updateExpenseInData,
+  deleteExpenseFromData
+} from './services/expenseService';
+
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Summary from './components/Summary';
@@ -13,6 +23,7 @@ import ProfileSelector from './components/ProfileSelector';
 import ProfileManagerModal from './components/ProfileManagerModal';
 import Auth from './components/Auth';
 import { auth, onAuthStateChanged, signOut } from './firebase';
+
 
 const EXPENSES_PER_PAGE = 10;
 
