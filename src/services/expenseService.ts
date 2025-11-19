@@ -160,3 +160,59 @@ export const formatToINR = (amount: number): string => {
     maximumFractionDigits: 2,
   }).format(amount);
 };
+
+// ---- Expense helpers ----
+
+export const addExpenseToData = async (
+  currentData: AppData,
+  accountId: string,
+  name: string,
+  amount: number,
+  date: string | Date = new Date()
+): Promise<AppData> => {
+  const expense: Expense = {
+    id: crypto.randomUUID(),
+    name,
+    amount,
+    date: date instanceof Date ? date.toISOString() : date,
+    accountId,
+    category: categorizeExpense(name),
+  };
+
+  const updated: AppData = {
+    ...currentData,
+    expenses: [expense, ...currentData.expenses],
+  };
+
+  await saveData(updated); // 🔴 this writes to Firestore + localStorage
+  return sortExpenses(updated);
+};
+
+export const deleteExpenseFromData = async (
+  currentData: AppData,
+  expenseId: string
+): Promise<AppData> => {
+  const updated: AppData = {
+    ...currentData,
+    expenses: currentData.expenses.filter((e) => e.id !== expenseId),
+  };
+
+  await saveData(updated);
+  return sortExpenses(updated);
+};
+
+export const updateExpenseInData = async (
+  currentData: AppData,
+  updatedExpense: Expense
+): Promise<AppData> => {
+  const updated: AppData = {
+    ...currentData,
+    expenses: currentData.expenses.map((e) =>
+      e.id === updatedExpense.id ? updatedExpense : e
+    ),
+  };
+
+  await saveData(updated);
+  return sortExpenses(updated);
+};
+
