@@ -5,17 +5,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // FIX: Consolidate all firebase auth imports to be from the local firebase module to fix resolution errors.
-import { 
-  auth,
-  db,
-  createUserWithEmailAndPassword, 
+import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   updateProfile,
-  doc,
-  setDoc,
-  getDoc,
-  serverTimestamp
-} from '../firebase';
+} from "../firebase";
+
+import { db } from "../firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const Auth: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
