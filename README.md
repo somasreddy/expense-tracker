@@ -3,7 +3,7 @@ A modern, multi-account expense tracking application built using **React (Vite)*
 Users can sign up with their **Family Name**, create multiple **profiles**, add categorized expenses, and view a clean dashboard with summaries.
 
 🚀 Live Demo:  
-👉 https://somasreddy.github.io/expense-calculator
+👉 https://somasreddy.github.io/expense-tracker
 
 ## ⭐ Features
 - Authentication with Firebase
