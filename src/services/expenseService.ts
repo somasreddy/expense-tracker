@@ -1,45 +1,77 @@
+import { Expense, Account, AppData, Category } from "../types";
+import { CATEGORY_KEYWORDS } from "../constants";
+import { auth, db, doc, getDoc, setDoc } from "../firebase";
 
-import { Expense, Account, AppData, Category } from '../types';
-import { CATEGORY_KEYWORDS } from '../constants';
-import { auth, db, doc, getDoc, setDoc } from '../firebase';
+/* -----------------------------------------------------
+   STORAGE KEYS
+----------------------------------------------------- */
+const OLD_STORAGE_KEY = "expenseCalculator_expenses";
+const NEW_STORAGE_KEY = "expenseCalculator_appData";
 
-const OLD_STORAGE_KEY = 'expenseCalculator_expenses';
-const NEW_STORAGE_KEY = 'expenseCalculator_appData';
-
+/* -----------------------------------------------------
+   FIRESTORE DOC ACCESSOR
+----------------------------------------------------- */
 const getAppDataDocRef = () => {
   const user = auth.currentUser;
   if (!user) return null;
-  // Use a consistent document ID for the user's app data
-  return doc(db, 'users', user.uid, 'appData', 'main');
+
+  // Stable location for user app data
+  return doc(db, "users", user.uid, "appData", "main");
 };
 
+/* -----------------------------------------------------
+   SORTING (non-mutating)
+----------------------------------------------------- */
+const sortExpenses = (data: AppData): AppData => {
+  return {
+    ...data,
+    expenses: [...data.expenses].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    ),
+  };
+};
+
+/* -----------------------------------------------------
+   SAVE DATA (Firestore + Local cache)
+----------------------------------------------------- */
 export const saveData = async (data: AppData): Promise<void> => {
   try {
+    const sorted = sortExpenses(data);
     const docRef = getAppDataDocRef();
+
+    // Save to Firestore
     if (docRef) {
-      await setDoc(docRef, data);
+      await setDoc(docRef, sorted);
     }
-    // Also write to localStorage so the UI can feel snappy, but Firestore is the source of truth.
-    localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(data));
+
+    // Save to localStorage cache
+    localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(sorted));
   } catch (error) {
     console.error("Failed to save app data", error);
   }
 };
 
-
+/* -----------------------------------------------------
+   LOAD LOCAL CACHE + MIGRATION
+----------------------------------------------------- */
 const loadDataFromLocalStorage = (): AppData | null => {
   try {
     const data = localStorage.getItem(NEW_STORAGE_KEY);
+
     if (data) {
       const parsedData = JSON.parse(data);
-      // Migration for users with 'profiles' or 'profileId' keys
+
+      // Migrate older structure: profiles → accounts
       if (parsedData.profiles) {
-        console.log("Migrating profiles to accounts...");
         parsedData.accounts = parsedData.profiles;
         delete parsedData.profiles;
       }
-      if (parsedData.expenses && parsedData.expenses.some((e: any) => e.profileId)) {
-        console.log("Migrating profileId to accountId...");
+
+      // Migrate old profileId → accountId
+      if (
+        parsedData.expenses &&
+        parsedData.expenses.some((e: any) => e.profileId)
+      ) {
         parsedData.expenses = parsedData.expenses.map((e: any) => {
           if (e.profileId) {
             const { profileId, ...rest } = e;
@@ -48,17 +80,22 @@ const loadDataFromLocalStorage = (): AppData | null => {
           return e;
         });
       }
+
       return parsedData;
     }
 
-    // Migration logic from old format (very first version)
+    // Migration from very old version
     const oldData = localStorage.getItem(OLD_STORAGE_KEY);
     if (oldData) {
-      console.log("Migrating old data to new format...");
-      const oldExpenses: Omit<Expense, 'accountId'>[] = JSON.parse(oldData);
-      const defaultAccount: Account = { id: 'default-account-1', name: 'Personal' };
+      console.log("Migrating old format → new format...");
 
-      const newExpenses: Expense[] = oldExpenses.map(exp => ({
+      const oldExpenses: Omit<Expense, "accountId">[] = JSON.parse(oldData);
+      const defaultAccount: Account = {
+        id: "default-account-1",
+        name: "Personal",
+      };
+
+      const newExpenses = oldExpenses.map((exp) => ({
         ...exp,
         accountId: defaultAccount.id,
       }));
@@ -70,99 +107,120 @@ const loadDataFromLocalStorage = (): AppData | null => {
 
       localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(migratedData));
       localStorage.removeItem(OLD_STORAGE_KEY);
+
       return migratedData;
     }
   } catch (error) {
-    console.error("Failed to load or parse data from localStorage", error);
+    console.error("Failed to load or parse local storage", error);
   }
+
   return null;
 };
 
+/* -----------------------------------------------------
+   PUBLIC: Load Cached Local Data
+----------------------------------------------------- */
 export const loadCachedAppData = (): AppData | null => {
   return loadDataFromLocalStorage();
 };
 
-const getDefaultData = (): AppData => {
-  const defaultAccount: Account = { id: 'default-account-1', name: 'Personal' };
-  return {
-    accounts: [defaultAccount],
-    expenses: [],
-  };
-};
+/* -----------------------------------------------------
+   DEFAULT STRUCTURE
+----------------------------------------------------- */
+const getDefaultData = (): AppData => ({
+  accounts: [{ id: "default-account-1", name: "Personal" }],
+  expenses: [],
+});
 
-const sortExpenses = (data: AppData): AppData => {
-  if (data && data.expenses) {
-    data.expenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }
-  return data;
-}
-
+/* -----------------------------------------------------
+   LOAD DATA (Firestore → fallback local → default)
+----------------------------------------------------- */
 export const loadData = async (): Promise<AppData> => {
   const docRef = getAppDataDocRef();
+
+  // User not logged in → use only local data
   if (!docRef) {
-    // User not logged in, they can only see local data if any exists.
-    const localData = loadDataFromLocalStorage() || getDefaultData();
-    return sortExpenses(localData);
+    return sortExpenses(loadDataFromLocalStorage() || getDefaultData());
   }
 
   try {
     const docSnap = await getDoc(docRef);
 
-    // Primary source of truth: Firestore
+    // Firestore is source of truth
     if (docSnap.exists()) {
-      console.log("Data loaded from Firestore.");
       const firestoreData = docSnap.data() as AppData;
+
+      // Update local cache for fast reloads
+      localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(firestoreData));
+
       return sortExpenses(firestoreData);
     }
 
-    // If no Firestore data, check localStorage for a one-time migration
-    console.log("No data in Firestore. Checking localStorage for migration.");
+    // No Firestore data → try migrating local data
     const localData = loadDataFromLocalStorage();
-
-    // Check if local data is meaningful (not just the default empty state)
-    if (localData && (localData.expenses.length > 0 || localData.accounts.length > 1 || (localData.accounts.length === 1 && localData.accounts[0].name !== 'Personal'))) {
-      console.log("Found local data to migrate to Firestore.");
-      await saveData(localData); // This saves it to Firestore and local cache
+    if (
+      localData &&
+      (localData.expenses.length > 0 ||
+        localData.accounts.length > 1 ||
+        (localData.accounts.length === 1 &&
+          localData.accounts[0].name !== "Personal"))
+    ) {
+      console.log("Migrating local data → Firestore...");
+      await saveData(localData);
       return sortExpenses(localData);
     }
   } catch (error) {
-    console.error("Failed to load data from Firestore, falling back to local storage.", error);
-    const fallbackData = loadDataFromLocalStorage() || getDefaultData();
-    return sortExpenses(fallbackData);
+    console.error("Firestore load error, falling back to local cache.", error);
+    return sortExpenses(loadDataFromLocalStorage() || getDefaultData());
   }
 
-  // If nothing found anywhere, return default.
-  console.log("No user data found. Returning default structure.");
-  return getDefaultData(); // Already sorted (empty)
+  return getDefaultData();
 };
 
+/* -----------------------------------------------------
+   CATEGORY DETECTION
+----------------------------------------------------- */
 export const categorizeExpense = (expenseName: string): Category => {
-    const lowerCaseName = expenseName.toLowerCase();
-    const categoryPriority = [
-        'EMIs', 'Rent', 'Bills', 'Utilities', 'Fuel', 'Health',
-        'Grocery', 'Food', 'Transportation', 'Entertainment', 'Shopping', 'Others'
-    ];
+  const lower = expenseName.toLowerCase();
 
-    for (const category of categoryPriority) {
-        const keywords = CATEGORY_KEYWORDS[category as Category];
-        if (keywords.some(keyword => lowerCaseName.includes(keyword))) {
-            return category as Category;
-        }
-    }
-    return 'Others';
+  const priority: Category[] = [
+    "EMIs",
+    "Rent",
+    "Bills",
+    "Utilities",
+    "Fuel",
+    "Health",
+    "Grocery",
+    "Food",
+    "Transportation",
+    "Entertainment",
+    "Shopping",
+    "Others",
+  ];
+
+  for (const category of priority) {
+    const keywords = CATEGORY_KEYWORDS[category] || [];
+    if (keywords.some((kw) => lower.includes(kw))) return category;
+  }
+
+  return "Others";
 };
 
+/* -----------------------------------------------------
+   FORMAT INR
+----------------------------------------------------- */
 export const formatToINR = (amount: number): string => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
 };
 
-// ---- Expense helpers ----
-
+/* -----------------------------------------------------
+   EXPENSE HELPERS
+----------------------------------------------------- */
 export const addExpenseToData = async (
   currentData: AppData,
   accountId: string,
@@ -174,9 +232,9 @@ export const addExpenseToData = async (
     id: crypto.randomUUID(),
     name,
     amount,
-    date: date instanceof Date ? date.toISOString() : date,
     accountId,
     category: categorizeExpense(name),
+    date: date instanceof Date ? date.toISOString() : date,
   };
 
   const updated: AppData = {
@@ -184,7 +242,7 @@ export const addExpenseToData = async (
     expenses: [expense, ...currentData.expenses],
   };
 
-  await saveData(updated); // 🔴 this writes to Firestore + localStorage
+  await saveData(updated);
   return sortExpenses(updated);
 };
 
@@ -215,4 +273,3 @@ export const updateExpenseInData = async (
   await saveData(updated);
   return sortExpenses(updated);
 };
-

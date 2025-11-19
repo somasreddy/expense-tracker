@@ -2,6 +2,7 @@ import ThemeSwitcher from "./components/ThemeSwitcher";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Expense, Category, Account } from './types';
+
 import {
   loadData,
   saveData,
@@ -22,8 +23,8 @@ import EditExpenseModal from './components/EditExpenseModal';
 import ProfileSelector from './components/ProfileSelector';
 import ProfileManagerModal from './components/ProfileManagerModal';
 import Auth from './components/Auth';
-import { auth, onAuthStateChanged, signOut } from './firebase';
 
+import { auth, onAuthStateChanged, signOut } from './firebase';
 
 const EXPENSES_PER_PAGE = 10;
 
@@ -33,7 +34,11 @@ const App: React.FC = () => {
   const [currentAccountId, setCurrentAccountId] = useState<string | null>('all');
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isAccountManagerOpen, setAccountManagerOpen] = useState(false);
-  const [filter, setFilter] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
+
+  const [filter, setFilter] = useState<{ start: string | null; end: string | null }>({
+    start: null,
+    end: null
+  });
 
   const [user, setUser] = useState<typeof auth.currentUser>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -47,6 +52,9 @@ const App: React.FC = () => {
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // --------------------------
+  // AUTH LISTENER
+  // --------------------------
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -55,18 +63,23 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // --------------------------
+  // PAGE TITLE
+  // --------------------------
   useEffect(() => {
-    if (user && user.displayName) {
+    if (user?.displayName) {
       document.title = `${user.displayName}'s Expense Tracker`;
     } else {
-      document.title = 'React Expense Tracker';
+      document.title = "Expense Tracker";
     }
   }, [user]);
 
+  // --------------------------
+  // LOAD DATA
+  // --------------------------
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
-        // 1) Try to hydrate from local cached data for instant UI
         const cached = loadCachedAppData();
         if (cached) {
           setMasterExpenses(cached.expenses || []);
@@ -76,7 +89,6 @@ const App: React.FC = () => {
           setDataLoading(true);
         }
 
-        // 2) Always fetch the latest from Firestore in the background
         try {
           const appData = await loadData();
           setMasterExpenses(appData.expenses || []);
@@ -87,159 +99,161 @@ const App: React.FC = () => {
       } else {
         setMasterExpenses([]);
         setAccounts([]);
-        setCurrentAccountId('all');
+        setCurrentAccountId("all");
         setDataLoading(false);
       }
     };
+
     fetchData();
   }, [user]);
 
+  // --------------------------
+  // AUTO-SAVE WHEN DATA CHANGES
+  // --------------------------
   useEffect(() => {
     if (!user || authLoading || dataLoading) return;
-    const isInitialDefaultData =
+
+    const isInitialDefault =
       masterExpenses.length === 0 &&
       accounts.length === 1 &&
-      accounts[0].id.startsWith('default-account');
+      accounts[0].id.startsWith("default-account");
 
-    if (!isInitialDefaultData) {
+    if (!isInitialDefault) {
       saveData({ expenses: masterExpenses, accounts });
     }
   }, [masterExpenses, accounts, user, authLoading, dataLoading]);
 
+  // --------------------------
+  // ADD EXPENSE (FULL FIRESTORE PERSISTENCE)
+  // --------------------------
   const handleAddExpense = async (name: string, amount: number) => {
-  if (currentAccountId === 'all' || !currentAccountId) {
-    alert("Please select a specific profile to add an expense.");
-    return;
-  }
+    if (currentAccountId === "all" || !currentAccountId) {
+      alert("Please select a specific profile to add an expense.");
+      return;
+    }
 
-  const updated = await addExpenseToData(
-    { expenses: masterExpenses, accounts },
-    currentAccountId,
-    name,
-    amount
-  );
+    const updated = await addExpenseToData(
+      { expenses: masterExpenses, accounts },
+      currentAccountId,
+      name,
+      amount
+    );
 
-  setMasterExpenses(updated.expenses);
-  setAccounts(updated.accounts);
-};
+    setMasterExpenses(updated.expenses);
+    setAccounts(updated.accounts);
+  };
 
+  // --------------------------
+  // UPDATE EXPENSE
+  // --------------------------
   const handleUpdateExpense = async (updatedExpense: Expense) => {
-  const updated = await updateExpenseInData(
-    { expenses: masterExpenses, accounts },
-    updatedExpense
-  );
+    const updated = await updateExpenseInData(
+      { expenses: masterExpenses, accounts },
+      updatedExpense
+    );
 
-  setMasterExpenses(updated.expenses);
-  setAccounts(updated.accounts);
-  setEditingExpense(null);
-};
+    setMasterExpenses(updated.expenses);
+    setAccounts(updated.accounts);
+    setEditingExpense(null);
+  };
 
+  // --------------------------
+  // DELETE EXPENSE
+  // --------------------------
   const handleDeleteExpense = async (id: string) => {
-  const updated = await deleteExpenseFromData(
-    { expenses: masterExpenses, accounts },
-    id
-  );
+    const updated = await deleteExpenseFromData(
+      { expenses: masterExpenses, accounts },
+      id
+    );
 
-  setMasterExpenses(updated.expenses);
-  setAccounts(updated.accounts);
-};
+    setMasterExpenses(updated.expenses);
+    setAccounts(updated.accounts);
+  };
 
-
+  // --------------------------
+  // ACCOUNT MANAGEMENT
+  // --------------------------
   const handleAddAccount = (name: string) => {
     const newAccount: Account = { id: `${Date.now()}`, name };
-    setAccounts(prevAccounts => [...prevAccounts, newAccount]);
+    setAccounts((prev) => [...prev, newAccount]);
     setCurrentAccountId(newAccount.id);
   };
 
   const handleDeleteAccount = (accountId: string) => {
     if (accounts.length <= 1) {
-      alert("Cannot delete the last profile. At least one must remain.");
+      alert("Cannot delete the last profile.");
       return;
     }
 
-    const accountToDelete = accounts.find(p => p.id === accountId);
-    const fallbackAccount = accounts.find(p => p.id !== accountId);
+    const fallback = accounts.find((p) => p.id !== accountId);
+    if (!fallback) return;
 
-    if (!accountToDelete || !fallbackAccount) return;
-
-    if (window.confirm(`Delete "${accountToDelete.name}" and transfer expenses to "${fallbackAccount.name}"?`)) {
-      setMasterExpenses(prevExpenses =>
-        prevExpenses.map(expense =>
-          expense.accountId === accountId ? { ...expense, accountId: fallbackAccount.id } : expense
+    if (window.confirm(`Delete this profile and move expenses to ${fallback.name}?`)) {
+      setMasterExpenses((prev) =>
+        prev.map((exp) =>
+          exp.accountId === accountId ? { ...exp, accountId: fallback.id } : exp
         )
       );
-      setAccounts(prevAccounts => prevAccounts.filter(p => p.id !== accountId));
-      if (currentAccountId === accountId) setCurrentAccountId(fallbackAccount.id);
+      setAccounts((prev) => prev.filter((p) => p.id !== accountId));
+
+      if (currentAccountId === accountId) {
+        setCurrentAccountId(fallback.id);
+      }
     }
   };
 
   const handleUpdateAccount = (accountId: string, newName: string) => {
-    setAccounts(prevAccounts =>
-      prevAccounts.map(p => (p.id === accountId ? { ...p, name: newName } : p))
+    setAccounts((prev) =>
+      prev.map((p) => (p.id === accountId ? { ...p, name: newName } : p))
     );
   };
 
+  // --------------------------
+  // FILTERS & CATEGORY
+  // --------------------------
   const handleSetFilter = (start: string, end: string) => setFilter({ start, end });
   const handleClearFilter = () => setFilter({ start: null, end: null });
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
+  const handleSetCategoryFilter = (category: Category) =>
+    setCategoryFilter((prev) => (prev === category ? null : category));
 
-  const handleSetCategoryFilter = (category: Category) => {
-    setCategoryFilter(prev => (prev === category ? null : category));
-    setSelectedExpenses([]);
-  };
-
+  // --------------------------
+  // SELECTION
+  // --------------------------
   const handleToggleExpenseSelection = (id: string) => {
-    setSelectedExpenses(prev =>
-      prev.includes(id) ? prev.filter(expId => expId !== id) : [...prev, id]
+    setSelectedExpenses((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  const handleToggleSelectAll = (filteredIds: string[]) => {
-    setSelectedExpenses(
-      selectedExpenses.length === filteredIds.length ? [] : filteredIds
-    );
+  const handleToggleSelectAll = (ids: string[]) => {
+    setSelectedExpenses(selectedExpenses.length === ids.length ? [] : ids);
   };
 
-  const handleDeleteSelectedExpenses = () => {
-    if (selectedExpenses.length === 0) return;
-    if (window.confirm(`Delete ${selectedExpenses.length} selected expense(s)?`)) {
-      setMasterExpenses(prev => prev.filter(exp => !selectedExpenses.includes(exp.id)));
-      setSelectedExpenses([]);
-    }
-  };
-
+  // --------------------------
+  // PAGINATION
+  // --------------------------
   const masterFilteredExpenses = useMemo(() => {
-    // Always start from a copy of masterExpenses so we don't accidentally mutate source.
-    let tempExpenses = [...masterExpenses];
+    let temp = [...masterExpenses];
 
-    // Profile filter
-    if (currentAccountId !== 'all') {
-      tempExpenses = tempExpenses.filter(e => e.accountId === currentAccountId);
+    if (currentAccountId !== "all") {
+      temp = temp.filter((e) => e.accountId === currentAccountId);
     }
 
-    // Date filter
     if (filter.start && filter.end) {
-      const startDate = new Date(filter.start);
-      const endDate = new Date(filter.end);
-      tempExpenses = tempExpenses.filter(expense => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate >= startDate && expenseDate <= endDate;
+      const s = new Date(filter.start);
+      const e = new Date(filter.end);
+      temp = temp.filter((ex) => {
+        const d = new Date(ex.date);
+        return d >= s && d <= e;
       });
     }
 
-    // Category filter
     if (categoryFilter) {
-      tempExpenses = tempExpenses.filter(expense => expense.category === categoryFilter);
+      temp = temp.filter((e) => e.category === categoryFilter);
     }
 
-    return tempExpenses;
+    return temp;
   }, [masterExpenses, currentAccountId, filter, categoryFilter]);
 
   useEffect(() => {
@@ -253,66 +267,55 @@ const App: React.FC = () => {
 
     setIsLoadingMore(true);
     setTimeout(() => {
-      const nextPage = page + 1;
-      const newExpenses = masterFilteredExpenses.slice(
+      const next = page + 1;
+      const newItems = masterFilteredExpenses.slice(
         page * EXPENSES_PER_PAGE,
-        nextPage * EXPENSES_PER_PAGE
+        next * EXPENSES_PER_PAGE
       );
-      setDisplayedExpenses(prev => [...prev, ...newExpenses]);
-      setPage(nextPage);
-      setHasMore(masterFilteredExpenses.length > nextPage * EXPENSES_PER_PAGE);
+
+      setDisplayedExpenses((prev) => [...prev, ...newItems]);
+      setPage(next);
+      setHasMore(masterFilteredExpenses.length > next * EXPENSES_PER_PAGE);
       setIsLoadingMore(false);
-    }, 500);
+    }, 300);
   }, [page, hasMore, isLoadingMore, masterFilteredExpenses]);
 
-  const dateFilteredExpensesForCharts = useMemo(() => {
-    let tempExpenses =
-      currentAccountId === 'all'
-        ? masterExpenses
-        : masterExpenses.filter(e => e.accountId === currentAccountId);
+  // --------------------------
+  // SIGN OUT
+  // --------------------------
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error("Signout error:", e);
+    }
+  };
 
-    if (!filter.start || !filter.end) return tempExpenses;
-
-    return tempExpenses.filter(expense => {
-      const expenseDate = new Date(expense.date);
-      return (
-        expenseDate >= new Date(filter.start!) &&
-        expenseDate <= new Date(filter.end!)
-      );
-    });
-  }, [masterExpenses, currentAccountId, filter]);
-
-  const filteredTotal = useMemo(
-    () => masterFilteredExpenses.reduce((total, expense) => total + expense.amount, 0),
-    [masterFilteredExpenses]
-  );
-
-  const categoryTotals = useMemo(() => {
-    const totals: { [key in Category]?: number } = {};
-    dateFilteredExpensesForCharts.forEach(expense => {
-      totals[expense.category] = (totals[expense.category] || 0) + expense.amount;
-    });
-    return totals;
-  }, [dateFilteredExpensesForCharts]);
-
-  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } };
-  const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } };
-  const currentProfileName = accounts.find(p => p.id === currentAccountId)?.name || 'All Profiles';
-
+  // --------------------------
+  // UI
+  // --------------------------
   if (authLoading || (user && dataLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-amber-400"></div>
+        <div className="animate-spin h-20 w-20 border-t-2 border-b-2 border-amber-400 rounded-full"></div>
       </div>
     );
   }
 
-  if (!user) {
-    return <Auth />;
-  }
+  if (!user) return <Auth />;
+
+  const filteredTotal = masterFilteredExpenses.reduce((t, e) => t + e.amount, 0);
+
+  const categoryTotals = useMemo(() => {
+    const totals: Record<Category, number> = {} as any;
+    masterFilteredExpenses.forEach((e) => {
+      totals[e.category] = (totals[e.category] || 0) + e.amount;
+    });
+    return totals;
+  }, [masterFilteredExpenses]);
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen text-slate-200 p-4 sm:p-6 lg:p-8 font-sans">
       <AnimatePresence>
         {editingExpense && (
           <EditExpenseModal
@@ -337,7 +340,7 @@ const App: React.FC = () => {
       <div className="max-w-7xl mx-auto card-surface p-4 sm:p-6 lg:p-8">
         <header className="mb-8">
           <div className="flex flex-wrap justify-between items-baseline gap-4">
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 tracking-tight leading-tight">
+            <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-yellow-500">
               {user.displayName ? `${user.displayName}'s` : ""} Expense Tracker
             </h1>
 
@@ -366,7 +369,7 @@ const App: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               className="mt-4 text-sm text-slate-300"
             >
-              Showing expenses for <strong>{currentProfileName}</strong>. Total:{" "}
+              Showing expenses for <strong>{accounts.find(a => a.id === currentAccountId)?.name || "All Profiles"}</strong>. Total:{" "}
               <span className="font-bold text-amber-300">{formatToINR(filteredTotal)}</span>
             </motion.div>
           ) : null}
@@ -374,18 +377,23 @@ const App: React.FC = () => {
 
         <motion.main
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-          variants={containerVariants}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
+          }}
           initial="hidden"
           animate="visible"
         >
-          <motion.div variants={itemVariants} className="lg:col-span-1 space-y-6 content-surface p-6">
+          {/* LEFT COLUMN */}
+          <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="lg:col-span-1 space-y-6 content-surface p-6">
             <h2 className="text-2xl font-bold text-white">Add New Expense</h2>
             <ExpenseForm onAddExpense={handleAddExpense} />
             <hr className="border-slate-700" />
             <Summary filteredTotal={filteredTotal} categoryTotals={categoryTotals} />
           </motion.div>
 
-          <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
+          {/* RIGHT COLUMN */}
+          <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="lg:col-span-2 space-y-6">
             <div className="content-surface p-6">
               <h2 className="text-2xl font-bold text-white mb-4">Expense Analysis</h2>
               <ExpenseChart
@@ -401,7 +409,7 @@ const App: React.FC = () => {
                   {categoryFilter ? `${categoryFilter} Expenses` : "Recent Expenses"}
                   {categoryFilter && (
                     <button
-                      onClick={() => handleSetCategoryFilter(categoryFilter)}
+                      onClick={() => setCategoryFilter(null)}
                       className="ml-2 text-sm text-amber-400 hover:text-amber-300"
                     >
                       (Clear)
@@ -418,10 +426,13 @@ const App: React.FC = () => {
                 onEditExpense={setEditingExpense}
                 selectedExpenses={selectedExpenses}
                 onToggleExpenseSelection={handleToggleExpenseSelection}
-                onToggleSelectAll={() =>
-                  handleToggleSelectAll(masterFilteredExpenses.map(e => e.id))
-                }
-                onDeleteSelected={handleDeleteSelectedExpenses}
+                onToggleSelectAll={() => handleToggleSelectAll(masterFilteredExpenses.map(e => e.id))}
+                onDeleteSelected={() => {
+                  if (selectedExpenses.length > 0 && window.confirm(`Delete ${selectedExpenses.length} selected expenses?`)) {
+                    selectedExpenses.forEach((id) => handleDeleteExpense(id));
+                    setSelectedExpenses([]);
+                  }
+                }}
                 onLoadMore={loadMoreExpenses}
                 hasMore={hasMore}
                 isLoadingMore={isLoadingMore}
@@ -431,7 +442,6 @@ const App: React.FC = () => {
         </motion.main>
       </div>
 
-      {/* 🌈 ADD THE THEME SWITCHER FLOATING BUTTON */}
       <ThemeSwitcher />
     </div>
   );
