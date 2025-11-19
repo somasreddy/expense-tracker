@@ -95,33 +95,44 @@ const App: React.FC = () => {
     }
   }, [masterExpenses, accounts, user, authLoading, dataLoading]);
 
-  const handleAddExpense = (name: string, amount: number) => {
-    if (currentAccountId === 'all' || !currentAccountId) {
-      alert("Please select a specific profile to add an expense.");
-      return;
-    }
+  const handleAddExpense = async (name: string, amount: number) => {
+  if (currentAccountId === 'all' || !currentAccountId) {
+    alert("Please select a specific profile to add an expense.");
+    return;
+  }
 
-    const newExpense: Expense = {
-      id: `${Date.now()}-${Math.random()}`,
-      accountId: currentAccountId,
-      name,
-      amount,
-      category: categorizeExpense(name),
-      date: new Date().toISOString(),
-    };
-    setMasterExpenses(prevExpenses => [newExpense, ...prevExpenses]);
-  };
+  const updated = await addExpenseToData(
+    { expenses: masterExpenses, accounts },
+    currentAccountId,
+    name,
+    amount
+  );
 
-  const handleUpdateExpense = (updatedExpense: Expense) => {
-    setMasterExpenses(prevExpenses =>
-      prevExpenses.map(expense => (expense.id === updatedExpense.id ? updatedExpense : expense))
-    );
-    setEditingExpense(null);
-  };
+  setMasterExpenses(updated.expenses);
+  setAccounts(updated.accounts);
+};
 
-  const handleDeleteExpense = (id: string) => {
-    setMasterExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== id));
-  };
+  const handleUpdateExpense = async (updatedExpense: Expense) => {
+  const updated = await updateExpenseInData(
+    { expenses: masterExpenses, accounts },
+    updatedExpense
+  );
+
+  setMasterExpenses(updated.expenses);
+  setAccounts(updated.accounts);
+  setEditingExpense(null);
+};
+
+  const handleDeleteExpense = async (id: string) => {
+  const updated = await deleteExpenseFromData(
+    { expenses: masterExpenses, accounts },
+    id
+  );
+
+  setMasterExpenses(updated.expenses);
+  setAccounts(updated.accounts);
+};
+
 
   const handleAddAccount = (name: string) => {
     const newAccount: Account = { id: `${Date.now()}`, name };
