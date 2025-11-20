@@ -9,6 +9,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  // ✅ ADD THIS FUNCTION
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -49,6 +51,8 @@ export {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  // ✅ ADD THIS EXPORT
+  sendPasswordResetEmail,
   doc,
   setDoc,
   getDoc,

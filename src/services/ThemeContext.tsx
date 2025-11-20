@@ -1,32 +1,22 @@
-// src/services/ThemeContext.tsx
 import React, {
   createContext,
   useContext,
   useEffect,
   useState,
   ReactNode,
+  useMemo,
 } from "react";
+// 🛑 Import theme types and utilities from the new file
+import { ThemeId, AppTheme, AVAILABLE_THEMES, THEME_STORAGE_KEY, getThemeById, defaultThemeId } from "./themes";
 
-export type ThemeId = "dark" | "light" | "ocean" | "neon";
-
-interface ThemeConfig {
-  id: ThemeId;
-  label: string;
-}
-
-const AVAILABLE_THEMES: ThemeConfig[] = [
-  { id: "dark", label: "Neo Dark" },
-  { id: "light", label: "Soft Light" },
-  { id: "ocean", label: "Ocean Blue" },
-  { id: "neon", label: "Purple Neon" },
-];
-
-const THEME_STORAGE_KEY = "expenseTracker_theme";
+// Ensure this file exports the necessary theme types if other files depend on it
+export type { ThemeId, AppTheme };
 
 interface ThemeContextValue {
   theme: ThemeId;
   setTheme: (theme: ThemeId) => void;
-  themes: ThemeConfig[];
+  themes: AppTheme[];
+  currentTheme: AppTheme; // 🛑 Exposes the full theme object
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -40,26 +30,31 @@ export const useTheme = (): ThemeContextValue => {
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setThemeState] = useState<ThemeId>(() => {
+  const [themeId, setThemeId] = useState<ThemeId>(() => {
     const saved = localStorage.getItem(THEME_STORAGE_KEY) as ThemeId | null;
+    // Check if the saved theme ID is one of the available themes
     return saved && AVAILABLE_THEMES.some((t) => t.id === saved)
       ? saved
-      : "dark";
+      : defaultThemeId;
   });
 
+  // Calculate the current theme object based on the stored ID
+  const currentTheme = useMemo(() => getThemeById(themeId), [themeId]);
+
   const setTheme = (next: ThemeId) => {
-    setThemeState(next);
+    setThemeId(next);
     localStorage.setItem(THEME_STORAGE_KEY, next);
   };
 
+  // Set the data-theme attribute on the root HTML element
   useEffect(() => {
     const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
-  }, [theme]);
+    root.setAttribute("data-theme", currentTheme.id);
+  }, [currentTheme.id]);
 
   return (
     <ThemeContext.Provider
-      value={{ theme, setTheme, themes: AVAILABLE_THEMES }}
+      value={{ theme: themeId, setTheme, themes: AVAILABLE_THEMES, currentTheme }}
     >
       {children}
     </ThemeContext.Provider>

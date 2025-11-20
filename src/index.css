@@ -18,7 +18,6 @@
   line-height: 1.5;
 }
 
-/* Theme variables – default (used before JS runs) */
 html,
 body {
   margin: 0;
@@ -28,201 +27,130 @@ body {
 
 /* DARK – Neo Dark */
 html[data-theme="dark"] {
-  --bg-body: #020617; /* slate-950 */
-  --bg-elevated: #020617;
+  --bg-body: #020617;
+  --bg-elevated: #0f172a; /* slightly lighter than body */
   --bg-card: #020617;
-  --bg-surface: #020617;
-
-  --border-subtle: rgba(148, 163, 184, 0.3);
-
+  --bg-surface: #0f172a;
+  --border-subtle: rgba(148, 163, 184, 0.2);
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
-
-  --accent: #facc15; /* yellow-400 */
-  --accent-soft: rgba(250, 204, 21, 0.12);
-
-  --chart-bg: #020617;
+  --text-highlight: #fbbf24; /* amber-400 */
+  
+  /* Ensures date picker icons are white */
+  color-scheme: dark; 
 }
 
 /* LIGHT – Soft Light */
 html[data-theme="light"] {
-  --bg-body: #f1f5f9;
-  --bg-elevated: #f9fafb;
+  --bg-body: #f8fafc;
+  --bg-elevated: #ffffff;
   --bg-card: #ffffff;
-  --bg-surface: #ffffff;
+  --bg-surface: #f1f5f9;
+  --border-subtle: #cbd5e1; /* slate-300 */
+  --text-main: #0f172a; /* slate-900 */
+  --text-muted: #64748b;
+  --text-highlight: #2563eb; /* blue-600 */
 
-  --border-subtle: rgba(148, 163, 184, 0.5);
-
-  --text-main: #0f172a;
-  --text-muted: #6b7280;
-
-  --accent: #f59e0b; /* amber-500 */
-  --accent-soft: rgba(245, 158, 11, 0.12);
-
-  --chart-bg: #ffffff;
+  color-scheme: light;
 }
 
-/* OCEAN – Blue accent */
+/* OCEAN – Animated Ocean */
 html[data-theme="ocean"] {
-  --bg-body: #020617;
-  --bg-elevated: #020617;
-  --bg-card: #020617;
-  --bg-surface: #020617;
-
-  --border-subtle: rgba(56, 189, 248, 0.35);
-
-  --text-main: #e5f6ff;
-  --text-muted: #7dd3fc;
-
-  --accent: #38bdf8; /* sky-400 */
-  --accent-soft: rgba(56, 189, 248, 0.14);
-
-  --chart-bg: #020617;
+  --bg-body: #0f172a;
+  --bg-elevated: #1e293b;
+  --bg-card: #1e293b;
+  --bg-surface: #1e293b;
+  --border-subtle: rgba(148, 163, 184, 0.2);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-highlight: #22d3ee; /* cyan-400 */
+  
+  color-scheme: dark;
 }
 
-/* NEON – Purple/rose */
+/* NEON – Purple Neon */
 html[data-theme="neon"] {
-  --bg-body: radial-gradient(circle at top, #4c1d95 0, #020617 55%);
-  --bg-elevated: rgba(15, 23, 42, 0.9);
-  --bg-card: rgba(15, 23, 42, 0.9);
-  --bg-surface: rgba(15, 23, 42, 0.95);
+  --bg-body: #0f172a;
+  --bg-elevated: #2e1065; /* deep purple */
+  --bg-card: #2e1065;
+  --bg-surface: #4c1d95;
+  --border-subtle: rgba(192, 132, 252, 0.4);
+  --text-main: #f3e8ff;
+  --text-muted: #a78bfa;
+  --text-highlight: #e879f9; /* fuchsia-400 */
 
-  --border-subtle: rgba(244, 114, 182, 0.4);
-
-  --text-main: #fdf2ff;
-  --text-muted: #e879f9;
-
-  --accent: #a855f7; /* purple-500 */
-  --accent-soft: rgba(168, 85, 247, 0.18);
-
-  --chart-bg: transparent;
+  color-scheme: dark;
 }
 
 /* ---------------------------------------------
-   Body & global text
+   Components
 --------------------------------------------- */
-
 body {
-  min-height: 100vh;
-  background: var(--bg-body);
+  background-color: var(--bg-body);
   color: var(--text-main);
-}
-
-/* ---------------------------------------------
-   Shared utility classes – used in App.tsx
---------------------------------------------- */
-
-.card-surface {
-  @apply rounded-3xl shadow-xl;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-}
-
-.content-surface {
-  @apply rounded-3xl shadow-lg;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-}
-
-.button {
-  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0;
-}
-
-.button-primary {
-  background-color: var(--accent);
-  color: #020617;
-}
-
-.button-primary:hover {
-  filter: brightness(1.05);
-}
-
-.button-secondary {
-  @apply border;
-  border-color: var(--border-subtle);
-  background-color: rgba(15, 23, 42, 0.9);
-  color: var(--text-main);
-}
-
-.button-secondary:hover {
-  background-color: rgba(30, 64, 175, 0.6);
-}
-
-/* Input / select styling to keep them readable on all themes */
-input[type="text"],
-input[type="number"],
-input[type="email"],
-input[type="password"],
-select {
-  @apply w-full rounded-xl px-3 py-2 text-sm outline-none border;
-  background-color: rgba(15, 23, 42, 0.9);
-  border-color: var(--border-subtle);
-  color: var(--text-main);
-}
-
-html[data-theme="light"] input[type="text"],
-html[data-theme="light"] input[type="number"],
-html[data-theme="light"] input[type="email"],
-html[data-theme="light"] input[type="password"],
-html[data-theme="light"] select {
-  background-color: #ffffff;
-}
-
-/* Scroll bar (nice on dark dashboards) */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.6);
-  border-radius: 999px;
-}
-
-/* Chart container helper */
-.chart-card {
-  background: var(--chart-bg);
-}
-
-
-/*@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-body {
-  @apply bg-slate-950 text-slate-100;
+  transition: background-color 0.5s, color 0.5s;
 }
 
 .card-surface {
-  @apply bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl shadow-xl;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  @apply rounded-2xl shadow-xl backdrop-blur-sm;
+  transition: background-color 0.5s, border-color 0.5s;
 }
 
 .content-surface {
-  @apply bg-slate-900/60 border border-slate-800 rounded-2xl shadow-lg;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  @apply rounded-xl shadow-sm;
+  transition: background-color 0.5s, border-color 0.5s;
 }
 
+/* Inputs (Date, Text, Select) - Standardized look */
+.input-base {
+  background-color: var(--bg-elevated);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  @apply rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-colors;
+}
+
+/* Buttons */
 .button {
-  @apply px-4 py-2 rounded-xl font-medium transition;
+  @apply px-4 py-2 rounded-xl font-medium shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95;
 }
 
 .button-primary {
-  @apply bg-amber-500 text-slate-900 hover:bg-amber-400;
+  background-color: var(--text-highlight);
+  color: var(--bg-body); /* Invert contrast */
+  @apply hover:opacity-90;
 }
 
 .button-secondary {
-  @apply bg-slate-800 text-slate-100 hover:bg-slate-700;
+  background-color: var(--bg-elevated);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  @apply hover:bg-slate-700/10; /* subtle darkening/lightening */
 }
 
-.input {
-  @apply w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400;
+/* -----------------------------------------------------
+   ANIMATED THEME UTILITIES
+----------------------------------------------------- */
+.bg-size-200 { background-size: 200% 200%; }
+.bg-size-300 { background-size: 300% 300%; }
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.label {
-  @apply text-sm font-medium text-slate-200;
+.animate-shift {
+  animation: gradient-shift 8s ease infinite alternate;
 }
-*/
 
+/* Specific Theme Gradients */
+.animate-gradient-deep-ocean {
+  background-image: linear-gradient(-45deg, #0c4a6e, #1e3a8a, #0f172a);
+}
+.animate-gradient-northern-lights {
+  background-image: linear-gradient(-45deg, #312e81, #701a75, #4c1d95);
+}

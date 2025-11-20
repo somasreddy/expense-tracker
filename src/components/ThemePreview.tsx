@@ -1,33 +1,47 @@
-import { useTheme } from "../services/ThemeContext";
+import { useTheme, AppTheme } from "./services/ThemeContext";
 
-const themeStyles: Record<string, string> = {
-  dark: "bg-[#0f172a]",
-  light: "bg-white border",
-  amber: "bg-gradient-to-br from-amber-700 to-amber-400",
-  neon: "bg-[#001b44]",
-  amoled: "bg-black",
-  pastel: "bg-[#e3f2fd]",
-  glass: "backdrop-blur-md bg-white/20",
-  gaming: "bg-gradient-to-br from-red-800 to-black",
-  midnight: "bg-[#18043b]",
-  emerald: "bg-[#bbf7d0]",
-  sunset: "bg-gradient-to-br from-yellow-300 to-orange-500",
+// Mapping the simplified theme IDs to simple background classes for the preview box.
+// This is now derived from the themes.ts file, which is exposed via the context.
+const getPreviewStyle = (theme: AppTheme): string => {
+  switch (theme.id) {
+    case 'dark':
+      return 'bg-slate-900 border-slate-700';
+    case 'light':
+      return 'bg-white border-slate-300 text-slate-900';
+    case 'ocean':
+      return 'bg-gradient-to-br from-cyan-700 to-blue-900';
+    case 'neon':
+      return 'bg-gradient-to-br from-violet-900 to-pink-700';
+    default:
+      return 'bg-gray-500';
+  }
 };
 
 export default function ThemePreview() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, themes } = useTheme();
 
   return (
-    <div className="grid grid-cols-3 gap-3 p-4">
-      {Object.keys(themeStyles).map((t) => (
+    <div className="grid grid-cols-2 gap-4 p-4">
+      {themes.map((t) => (
         <div
-          key={t}
-          onClick={() => setTheme(t)}
-          className={`h-20 rounded-xl cursor-pointer shadow-lg overflow-hidden relative 
-            ${themeStyles[t]} ${theme === t ? "ring-4 ring-amber-400" : ""}`}
+          key={t.id}
+          onClick={() => setTheme(t.id)}
+          className={`h-24 rounded-xl cursor-pointer shadow-lg overflow-hidden relative border transition-all duration-300
+            ${getPreviewStyle(t)} ${theme === t.id ? 'ring-4 ring-offset-2 ring-offset-slate-900 ring-amber-400' : ''}`}
         >
-          <div className="absolute bottom-1 left-1 text-xs text-white font-semibold">
-            {t}
+          {/* Animated Background Preview (only for animated themes) */}
+          {t.gradientClass && (
+            <div 
+              className={`absolute inset-0 ${t.gradientClass} ${t.animationClass} bg-size-200`}
+              style={{ animationDuration: '3s', animationIterationCount: 'infinite' }}
+            ></div>
+          )}
+
+          {/* Label */}
+          <div className={`absolute bottom-0 left-0 right-0 p-2 text-center text-xs font-semibold backdrop-blur-sm 
+                         ${t.id === 'light' ? 'bg-slate-900/50 text-slate-100' : 'bg-slate-100/10 text-white'}`}
+          >
+            {t.label}
           </div>
         </div>
       ))}

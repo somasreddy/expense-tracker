@@ -225,14 +225,15 @@ export const formatToINR = (amount: number): string => {
 /* -----------------------------------------------------
    EXPENSE HELPERS (ALWAYS PERSIST)
 ----------------------------------------------------- */
-export const addExpenseToData = async (
+export const createAndPersistExpense = async (
   currentData: AppData,
   accountId: string,
   name: string,
   amount: number,
   date: string | Date = new Date()
-): Promise<AppData> => {
-  const expense: Expense = {
+): Promise<Expense> => {
+  // 1. Create the new expense object
+  const newExpense: Expense = {
     id: crypto.randomUUID(),
     name,
     amount,
@@ -241,14 +242,19 @@ export const addExpenseToData = async (
     date: date instanceof Date ? date.toISOString() : date,
   };
 
+  // 2. Prepare the updated data structure for saving
   const updated: AppData = {
     ...currentData,
-    expenses: [expense, ...(currentData.expenses || [])],
+    expenses: [newExpense, ...(currentData.expenses || [])],
   };
+  
+  // 3. Save asynchronously in the background (DO NOT AWAIT)
+  saveData(updated); 
 
-  await saveData(updated);
-  return sortExpenses(updated);
+  // 4. Return the new expense immediately for the optimistic UI update
+  return newExpense;
 };
+
 
 export const deleteExpenseFromData = async (
   currentData: AppData,
