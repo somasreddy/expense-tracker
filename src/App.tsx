@@ -4,9 +4,9 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
-import ThemeSwitcher from "./components/ThemeSwitcher";
+import { ThemeProvider, useTheme } from "./services/ThemeContext";
 
 import { Expense, Category, Account } from "./types";
 
@@ -15,7 +15,7 @@ import {
   saveData,
   formatToINR,
   loadCachedAppData,
-  addExpenseToData,
+  createAndPersistExpense,
   updateExpenseInData,
   deleteExpenseFromData,
 } from "./services/expenseService";
@@ -25,24 +25,32 @@ import ExpenseList from "./components/ExpenseList";
 import Summary from "./components/Summary";
 import ExpenseChart from "./components/ExpenseChart";
 import DateFilter from "./components/DateFilter";
-import EditExpenseModal from "./components/EditExpenseModal";
 import ProfileSelector from "./components/ProfileSelector";
-import ProfileManagerModal from "./components/ProfileManagerModal";
+import ProfileManagerModal from "./components/ProfileManagerModal"; // Ensure this is imported
 import Auth from "./components/Auth";
+import ThemeSwitcher from "./components/ThemeSwitcher";
 
 import { auth, onAuthStateChanged, signOut } from "./firebase";
 
 const EXPENSES_PER_PAGE = 10;
 
-const App: React.FC = () => {
+// Inner App component that consumes the theme context
+const AppContent: React.FC = () => {
   /******************************************
-   * STATE (ORDER MUST NEVER CHANGE)
+   * THEME CONTEXT
+   ******************************************/
+  const { currentTheme } = useTheme();
+
+  /******************************************
+   * STATE
    ******************************************/
   const [masterExpenses, setMasterExpenses] = useState<Expense[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [currentAccountId, setCurrentAccountId] = useState<string>("all");
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  
+  // ✅ STATE FOR MODAL VISIBILITY
   const [isAccountManagerOpen, setAccountManagerOpen] = useState(false);
 
   const [filter, setFilter] = useState<{ start: string | null; end: string | null }>({
@@ -87,33 +95,32 @@ const App: React.FC = () => {
   /******************************************
    * EFFECT 3: LOAD DATA (FIREBASE + CACHE)
    ******************************************/
-useEffect(() => {
-  if (!user) {
-    setMasterExpenses([]);
-    setAccounts([]);
-    setCurrentAccountId("all");
-    setDataLoading(false);
-    return;
-  }
+  useEffect(() => {
+    if (!user) {
+      setMasterExpenses([]);
+      setAccounts([]);
+      setCurrentAccountId("all");
+      setDataLoading(false);
+      return;
+    }
 
-  // 1️⃣ Load cached data instantly
-  const cached = loadCachedAppData();
-  if (cached) {
-    setMasterExpenses(cached.expenses);
-    setAccounts(cached.accounts);
-    setDataLoading(false);
-  } else {
-    setDataLoading(true);
-  }
+    // 1️⃣ Load cached data instantly
+    const cached = loadCachedAppData();
+    if (cached) {
+      setMasterExpenses(cached.expenses);
+      setAccounts(cached.accounts);
+      setDataLoading(false);
+    } else {
+      setDataLoading(true);
+    }
 
-  // 2️⃣ Firestore sync in background (non-blocking)
-  loadData().then((fresh) => {
-    setMasterExpenses(fresh.expenses);
-    setAccounts(fresh.accounts);
-    setDataLoading(false);
-  });
-}, [user]);
-
+    // 2️⃣ Firestore sync in background (non-blocking)
+    loadData().then((fresh) => {
+      setMasterExpenses(fresh.expenses);
+      setAccounts(fresh.accounts);
+      setDataLoading(false);
+    });
+  }, [user]);
 
   /******************************************
    * EFFECT 4: AUTO SAVE WHEN DATA CHANGES
@@ -170,7 +177,7 @@ useEffect(() => {
   }, [masterFilteredExpenses]);
 
   /******************************************
-   * CALLBACK 1: LOAD MORE (INFINITE SCROLL / NEXT PAGE)
+   * CALLBACK 1: LOAD MORE
    ******************************************/
   const loadMoreExpenses = useCallback(() => {
     if (isLoadingMore || !hasMore) return;
@@ -191,7 +198,7 @@ useEffect(() => {
   }, [page, hasMore, isLoadingMore, masterFilteredExpenses]);
 
   /******************************************
-   * MEMO 2: TOTAL & CATEGORY TOTALS (for Summary & Chart)
+   * MEMO 2: TOTAL & CATEGORY TOTALS
    ******************************************/
   const filteredTotal = useMemo(
     () => masterFilteredExpenses.reduce((sum, e) => sum + e.amount, 0),
@@ -209,21 +216,21 @@ useEffect(() => {
   /******************************************
    * EXPENSE OPERATIONS
    ******************************************/
-  const handleAddExpense = async (name: string, amount: number) => {
+  const handleAddExpense = async (name: string, amount: number): Promise<boolean> => {
     if (!currentAccountId || currentAccountId === "all") {
-      alert("Please select a specific profile to add an expense.");
-      return;
+      alert("Cannot add expense to 'All Profiles'. Please select a specific profile.");
+      return false;
     }
 
-    const updated = await addExpenseToData(
+    const newExpense = await createAndPersistExpense(
       { expenses: masterExpenses, accounts },
       currentAccountId,
       name,
       amount
     );
-
-    setMasterExpenses(updated.expenses);
-    setAccounts(updated.accounts);
+    
+    setMasterExpenses(prevExpenses => [newExpense, ...prevExpenses]);
+    return true;
   };
 
   const handleUpdateExpense = async (expense: Expense) => {
@@ -265,8 +272,7 @@ useEffect(() => {
 
     if (
       window.confirm(
-        `Delete profile "${accounts.find((a) => a.id === accountId)?.name ??
-          ""}" and move expenses to "${fallback.name}"?`
+        `Delete profile "${accounts.find((a) => a.id === accountId)?.name}"?`
       )
     ) {
       setMasterExpenses((prev) =>
@@ -275,7 +281,6 @@ useEffect(() => {
         )
       );
       setAccounts((prev) => prev.filter((p) => p.id !== accountId));
-
       if (currentAccountId === accountId) setCurrentAccountId(fallback.id);
     }
   };
@@ -319,11 +324,11 @@ useEffect(() => {
   };
 
   /******************************************
-   * LOADING / AUTH GATES
+   * RENDER
    ******************************************/
   if (authLoading || (user && dataLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-body)]">
         <div className="animate-spin h-20 w-20 border-t-2 border-b-2 border-amber-400 rounded-full" />
       </div>
     );
@@ -334,38 +339,24 @@ useEffect(() => {
   const currentProfileName =
     accounts.find((a) => a.id === currentAccountId)?.name || "All Profiles";
 
-  /******************************************
-   * UI
-   ******************************************/
   return (
-    <div className="min-h-screen text-slate-200 p-4 sm:p-6 lg:p-8 font-sans">
-      <AnimatePresence>
-        {editingExpense && (
-          <EditExpenseModal
-            expense={editingExpense}
-            onUpdate={handleUpdateExpense}
-            onCancel={() => setEditingExpense(null)}
-          />
-        )}
-
-        {isAccountManagerOpen && (
-          <ProfileManagerModal
-            isOpen={isAccountManagerOpen}
-            onClose={() => setAccountManagerOpen(false)}
-            accounts={accounts}
-            onAddAccount={handleAddAccount}
-            onDeleteAccount={handleDeleteAccount}
-            onUpdateAccount={handleUpdateAccount}
-          />
-        )}
-      </AnimatePresence>
-
+    // MAIN WRAPPER DIV
+    <div
+      className={`min-h-screen text-[var(--text-main)] p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500 
+                  ${currentTheme.gradientClass} ${currentTheme.animationClass}`}
+    >
       <div className="max-w-7xl mx-auto card-surface p-4 sm:p-6 lg:p-8">
         {/* HEADER */}
         <header className="mb-8">
           <div className="flex flex-wrap justify-between items-baseline gap-4">
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500">
-              {user.displayName ? `${user.displayName}'s` : ""} Expense Tracker
+            {/* Updated Title Gradient with padding-bottom to avoid clipping */}
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight pb-1">
+              <span 
+                className={`bg-clip-text text-transparent bg-gradient-to-r ${currentTheme.accentClass}`}
+                style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+              >
+                {user.displayName ? `${user.displayName}'s` : "My"} Expense Tracker
+              </span>
             </h1>
 
             <div className="flex items-center gap-3">
@@ -391,18 +382,18 @@ useEffect(() => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-4 text-sm text-slate-300"
+              className="mt-4 text-sm opacity-80"
             >
               Showing expenses for{" "}
               <strong>{currentProfileName}</strong> — Total:{" "}
-              <span className="font-bold text-amber-300">
+              <span className="font-bold text-[var(--text-highlight)]">
                 {formatToINR(filteredTotal)}
               </span>
             </motion.div>
           ) : null}
         </header>
 
-        {/* MAIN GRID */}
+        {/* MAIN CONTENT GRID */}
         <motion.main
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           variants={{
@@ -420,9 +411,9 @@ useEffect(() => {
             variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
             className="lg:col-span-1 space-y-6 content-surface p-6"
           >
-            <h2 className="text-2xl font-bold text-white">Add New Expense</h2>
+            <h2 className="text-2xl font-bold">Add New Expense</h2>
             <ExpenseForm onAddExpense={handleAddExpense} />
-            <hr className="border-slate-700" />
+            <hr className="border-[var(--border-subtle)]" />
             <Summary
               filteredTotal={filteredTotal}
               categoryTotals={categoryTotals}
@@ -436,12 +427,11 @@ useEffect(() => {
           >
             {/* CHART */}
             <div className="content-surface p-6 min-h-[260px]">
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="text-2xl font-bold mb-4">
                 Expense Analysis
               </h2>
-              {/* Avoid Recharts width(-1) / height(-1) when no data */}
               {masterFilteredExpenses.length === 0 ? (
-                <p className="text-slate-400 text-sm">
+                <p className="opacity-60 text-sm">
                   No expenses to visualize yet. Add a few expenses to see charts.
                 </p>
               ) : (
@@ -458,12 +448,12 @@ useEffect(() => {
             {/* LIST */}
             <div className="content-surface p-6">
               <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-2xl font-bold">
                   {categoryFilter ? `${categoryFilter} Expenses` : "Recent Expenses"}
                   {categoryFilter && (
                     <button
                       onClick={() => setCategoryFilter(null)}
-                      className="ml-2 text-sm text-amber-400"
+                      className="ml-2 text-sm text-[var(--text-highlight)]"
                     >
                       (Clear)
                     </button>
@@ -504,9 +494,26 @@ useEffect(() => {
         </motion.main>
       </div>
 
+      {/* ✅ THEME SWITCHER (Inside the main div) */}
       <ThemeSwitcher />
+
+      {/* ✅ PROFILE MANAGER MODAL (Inside the main div) */}
+      <ProfileManagerModal
+        isOpen={isAccountManagerOpen}
+        onClose={() => setAccountManagerOpen(false)}
+        accounts={accounts}
+        onAddAccount={handleAddAccount}
+        onDeleteAccount={handleDeleteAccount}
+        onUpdateAccount={handleUpdateAccount}
+      />
+
     </div>
   );
+};
+
+// Removed inner ThemeProvider since main.tsx handles it
+const App: React.FC = () => {
+  return <AppContent />;
 };
 
 export default App;
