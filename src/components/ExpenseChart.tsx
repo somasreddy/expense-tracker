@@ -1,117 +1,82 @@
+import { Category } from "../types";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+} from "recharts";
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector } from 'recharts';
-import { Category } from '../types';
-import { formatToINR } from '../services/expenseService';
-
-interface ExpenseChartProps {
-  categoryTotals: { [key in Category]?: number };
+interface Props {
+  categoryTotals: Record<Category, number>;
   onCategoryClick: (category: Category) => void;
   activeCategory: Category | null;
 }
 
 const COLORS = [
-  '#facc15', '#fb923c', '#fb7185', '#c084fc', '#818cf8', 
-  '#60a5fa', '#34d399', '#a3e635', '#f87171', '#d946ef',
-  '#14b8a6', '#6b7280'
+  "#F97316",
+  "#22C55E",
+  "#3B82F6",
+  "#EC4899",
+  "#A855F7",
+  "#EAB308",
+  "#F97316",
+  "#06B6D4",
+  "#4ADE80",
+  "#FACC15",
+  "#F97316",
+  "#FB7185",
+  "#94A3B8",
 ];
 
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0];
-    // FIX: Check if `percent` is a valid number to prevent NaN display.
-    if (typeof data.percent !== 'number') {
-      return null;
-    }
-    return (
-      <div className="p-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-lg shadow-lg text-sm">
-        <p className="font-bold text-white">{data.name}</p>
-        <p className="text-slate-300">{`Amount: ${formatToINR(data.value)}`}</p>
-        <p className="text-slate-400">{`Percentage: ${(data.percent * 100).toFixed(2)}%`}</p>
-      </div>
-    );
-  }
-  return null;
-};
+const ExpenseChart: React.FC<Props> = ({
+  categoryTotals,
+  onCategoryClick,
+  activeCategory,
+}) => {
+  const data = Object.entries(categoryTotals)
+    .filter(([, value]) => value > 0)
+    .map(([name, value]) => ({ name, value }));
 
-const renderActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props;
-
-  return (
-    <g>
-      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="text-base font-bold dark:fill-white">
-        {payload.name}
-      </text>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 6} // Pop out effect
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{ filter: `drop-shadow(0 0 15px ${fill})` }} // 3D glow
-      />
-    </g>
-  );
-};
-
-
-const ExpenseChart: React.FC<ExpenseChartProps> = ({ categoryTotals, onCategoryClick, activeCategory }) => {
-  const chartData = useMemo(() => Object.entries(categoryTotals)
-    // FIX: Explicitly convert the value to a number to prevent type errors in subsequent filter and sort operations.
-    .map(([name, value]) => ({ name: name as Category, value: Number(value) || 0 }))
-    .filter(item => item.value > 0)
-    .sort((a, b) => b.value - a.value), [categoryTotals]);
-
-  const activeIndex = useMemo(() => {
-    if (!activeCategory) return -1; // No active slice
-    return chartData.findIndex(d => d.name === activeCategory);
-  }, [activeCategory, chartData]);
-
-  if (chartData.length === 0) {
-    return <p className="text-center text-slate-400 py-10">No data to display in chart.</p>;
+  if (data.length === 0) {
+    return <div className="text-sm text-slate-400">No data to display yet.</div>;
   }
 
-  const handlePieClick = (data: any, index: number) => {
-    onCategoryClick(data.name);
-  };
-
   return (
-    <div style={{ width: '100%', height: 300 }}>
-      <ResponsiveContainer>
+    <div className="w-full h-72 min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <PieChart>
           <Pie
-            activeIndex={activeIndex}
-            activeShape={renderActiveShape}
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            innerRadius={70}
-            outerRadius={90}
-            paddingAngle={5}
-            fill="#8884d8"
+            data={data}
             dataKey="value"
             nameKey="name"
-            onClick={handlePieClick}
-            onMouseLeave={() => {}} // Disable mouse leave event to keep slice active
+            cx="50%"
+            cy="50%"
+            outerRadius={90}
+            innerRadius={40}
+            onClick={(entry) => onCategoryClick(entry.name as Category)}
           >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ outline: 'none', cursor: 'pointer' }}/>
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${entry.name}`}
+                fill={COLORS[index % COLORS.length]}
+                stroke={
+                  activeCategory === entry.name ? "#fbbf24" : "rgba(15,23,42,0.8)"
+                }
+                strokeWidth={activeCategory === entry.name ? 3 : 1}
+              />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip />} />
-          <Legend 
-            iconType="circle"
-            layout="vertical" 
-            verticalAlign="middle" 
-            align="right"
-            wrapperStyle={{
-              fontSize: '12px',
-              color: '#475569',
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "rgba(15,23,42,0.95)",
+              border: "1px solid rgb(51,65,85)",
+              borderRadius: "0.75rem",
+              fontSize: "0.75rem",
             }}
-            formatter={(value, entry, index) => <span className="text-slate-300">{value}</span>}
           />
+          <Legend />
         </PieChart>
       </ResponsiveContainer>
     </div>

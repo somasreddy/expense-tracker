@@ -1,32 +1,29 @@
-export const Categories = [
-  'Grocery',
-  'Fuel',
-  'Bills',
-  'Shopping',
-  'Food',
-  'Transportation',
-  'Entertainment',
-  'Health',
-  'Utilities',
-  'Rent',
-  'EMIs',
-  'Others',
-] as const;
+export type Category =
+  | "EMIs"
+  | "Rent"
+  | "Bills"
+  | "Utilities"
+  | "Fuel"
+  | "Health"
+  | "Grocery"
+  | "Food"
+  | "Transportation"
+  | "Entertainment"
+  | "Shopping"
+  | "Others";
 
-export type Category = typeof Categories[number];
+export interface Expense {
+  id: string;
+  name: string;
+  amount: number;
+  date: string; // ISO
+  accountId: string;
+  category: Category;
+}
 
 export interface Account {
   id: string;
   name: string;
-}
-
-export interface Expense {
-  id: string;
-  accountId: string;
-  name: string;
-  amount: number;
-  category: Category;
-  date: string; // YYYY-MM-DD
 }
 
 export interface AppData {

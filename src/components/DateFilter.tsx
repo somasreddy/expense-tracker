@@ -1,60 +1,49 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-
-interface DateFilterProps {
-  onFilter: (startDate: string, endDate: string) => void;
+interface Props {
+  onFilter: (start: string, end: string) => void;
   onClear: () => void;
 }
 
-const DateFilter: React.FC<DateFilterProps> = ({ onFilter, onClear }) => {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  const handleFilter = () => {
-    if (startDate && endDate) {
-      onFilter(startDate, endDate);
-    }
-  };
-
-  const handleClear = () => {
-    setStartDate('');
-    setEndDate('');
-    onClear();
+const DateFilter: React.FC<Props> = ({ onFilter, onClear }) => {
+  const handleChange = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const start = (form.elements.namedItem("start") as HTMLInputElement).value;
+    const end = (form.elements.namedItem("end") as HTMLInputElement).value;
+    if (start && end) onFilter(start, end);
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <input
-        type="date"
-        value={startDate}
-        onChange={(e) => setStartDate(e.target.value)}
-        className="px-3 py-2 text-sm shadow-sm"
-      />
-      <span className="text-slate-400">to</span>
-      <input
-        type="date"
-        value={endDate}
-        onChange={(e) => setEndDate(e.target.value)}
-        className="px-3 py-2 text-sm shadow-sm"
-      />
-      <motion.button
-        onClick={handleFilter}
-        disabled={!startDate || !endDate}
-        className="button animated-button disabled:opacity-50 disabled:cursor-not-allowed"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Filter
-      </motion.button>
-      <motion.button
-        onClick={handleClear}
+    <form
+      onSubmit={handleChange}
+      className="flex flex-wrap gap-2 items-end text-sm"
+    >
+      <div>
+        <label className="label">From</label>
+        <input
+          type="date"
+          name="start"
+          className="input"
+        />
+      </div>
+      <div>
+        <label className="label">To</label>
+        <input
+          type="date"
+          name="end"
+          className="input"
+        />
+      </div>
+      <button type="submit" className="button button-secondary">
+        Apply
+      </button>
+      <button
+        type="button"
         className="button button-secondary"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        onClick={onClear}
       >
         Clear
-      </motion.button>
-    </div>
+      </button>
+    </form>
   );
 };
 
