@@ -10,12 +10,14 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
-import { getFirestore } from "firebase/firestore";
-
-// -----------------------------------------------------
-// Firebase Config
-// -----------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyD33zFMo1N-HyxIUF2OdFXt5vrafjzGWIU",
   authDomain: "expense-tracker-13724.firebaseapp.com",
@@ -26,33 +28,31 @@ const firebaseConfig = {
   measurementId: "G-3HHPKLFJ62",
 };
 
-// Initialize Firebase
+// Init Firebase
 const app = initializeApp(firebaseConfig);
 
-// -----------------------------------------------------
 // Auth
-// -----------------------------------------------------
 export const auth = getAuth(app);
 
-// Persist login across refresh + deployment
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error("Auth persistence setup failed:", error);
+// Persist login across refresh
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.error("Failed to set auth persistence", err);
 });
 
-// -----------------------------------------------------
 // Firestore
-// -----------------------------------------------------
 export const db = getFirestore(app);
 
-// -----------------------------------------------------
-// Auth Exports
-// -----------------------------------------------------
+// Re-exports for convenience
 export {
   onAuthStateChanged,
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
 };
 
 export default app;

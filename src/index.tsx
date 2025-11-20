@@ -7,7 +7,7 @@ import App from "./App";
 import { ThemeProvider } from "./services/ThemeContext";
 
 // 🔥 Global Styles (Tailwind v4 + themes)
-import "./styles/index.css";
+import "./index.css";
 
 
 // 🔥 Mount React App

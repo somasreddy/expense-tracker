@@ -1,39 +1,44 @@
+import { Category } from "../types";
+import { formatToINR } from "../services/expenseService";
 
-import React from 'react';
-import { Category } from '../types';
-import { formatToINR } from '../services/expenseService';
-
-interface SummaryProps {
+interface Props {
   filteredTotal: number;
-  categoryTotals: { [key in Category]?: number };
+  categoryTotals: Record<Category, number>;
 }
 
-const Summary: React.FC<SummaryProps> = ({ filteredTotal, categoryTotals }) => {
+const Summary: React.FC<Props> = ({ filteredTotal, categoryTotals }) => {
+  const topCategories = Object.entries(categoryTotals)
+    .filter(([, value]) => value > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-slate-400">Total Expenses</h3>
-        <p className="text-3xl font-bold text-amber-300">{formatToINR(filteredTotal)}</p>
+    <div className="space-y-4">
+      <div className="p-4 rounded-xl bg-slate-800/70 border border-slate-700">
+        <div className="text-sm text-slate-300">Total Spent</div>
+        <div className="text-2xl font-bold text-amber-300">
+          {formatToINR(filteredTotal)}
+        </div>
       </div>
-      <div>
-        <h3 className="text-lg font-medium text-white mb-2">Spend by Category</h3>
-        <ul className="space-y-2 max-h-60 overflow-y-auto pr-2 -mr-2">
-          {Object.entries(categoryTotals).length > 0 ? (
-            Object.entries(categoryTotals)
-              // FIX: Explicitly convert values to numbers to prevent type errors.
-              .sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0))
-              .map(([category, total]) => (
-                <li key={category} className="flex justify-between items-center text-sm">
-                  <span className="text-slate-300">{category}</span>
-                  {/* FIX: Explicitly convert total to a number before formatting. */}
-                  <span className="font-semibold text-slate-100">{formatToINR(Number(total) || 0)}</span>
-                </li>
-              ))
-          ) : (
-            <p className="text-sm text-slate-400">No expenses in this period.</p>
-          )}
-        </ul>
-      </div>
+
+      {topCategories.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-sm font-semibold text-slate-300">
+            Top Categories
+          </div>
+          {topCategories.map(([cat, value]) => (
+            <div
+              key={cat}
+              className="flex justify-between text-sm bg-slate-900/60 rounded-lg px-3 py-2"
+            >
+              <span>{cat}</span>
+              <span className="text-amber-300">
+                {formatToINR(value as number)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,9 +1,7 @@
+// src/services/expenseService.ts
 import { Expense, Account, AppData, Category } from "../types";
 import { CATEGORY_KEYWORDS } from "../constants";
-import { auth, db } from "../firebase";
-
-// Firestore imports MUST come from Firebase SDK directly
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db, doc, getDoc, setDoc } from "../firebase";
 
 /* -----------------------------------------------------
    STORAGE KEYS
@@ -17,19 +15,21 @@ const NEW_STORAGE_KEY = "expenseCalculator_appData";
 const getAppDataDocRef = () => {
   const user = auth.currentUser;
   if (!user) return null;
-
+  // Stable location for the logged-in user's app data
   return doc(db, "users", user.uid, "appData", "main");
 };
 
 /* -----------------------------------------------------
-   SORT EXPENSES (non-mutating)
+   SMALL HELPER: SORT EXPENSES (NON-MUTATING)
 ----------------------------------------------------- */
-const sortExpenses = (data: AppData): AppData => ({
-  ...data,
-  expenses: [...data.expenses].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  ),
-});
+const sortExpenses = (data: AppData): AppData => {
+  return {
+    ...data,
+    expenses: [...(data.expenses || [])].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    ),
+  };
+};
 
 /* -----------------------------------------------------
    SAVE DATA (FIRESTORE + LOCAL CACHE)
@@ -39,60 +39,70 @@ export const saveData = async (data: AppData): Promise<void> => {
     const sorted = sortExpenses(data);
     const docRef = getAppDataDocRef();
 
+    // Save to Firestore if user is logged in
     if (docRef) {
       await setDoc(docRef, sorted);
     }
 
+    // Cache in localStorage for instant reloads
     localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(sorted));
   } catch (error) {
-    console.error("Failed to save app data:", error);
+    console.error("Failed to save app data", error);
   }
 };
 
 /* -----------------------------------------------------
-   LOAD LOCAL STORAGE (w/ auto-migration)
+   LOAD FROM LOCAL STORAGE + HANDLE MIGRATION
 ----------------------------------------------------- */
 const loadDataFromLocalStorage = (): AppData | null => {
   try {
-    const json = localStorage.getItem(NEW_STORAGE_KEY);
+    const raw = localStorage.getItem(NEW_STORAGE_KEY);
 
-    if (json) {
-      const parsed = JSON.parse(json);
+    if (raw) {
+      const parsed = JSON.parse(raw);
 
-      // Migrate profiles → accounts
+      // Migration: profiles → accounts
       if (parsed.profiles) {
         parsed.accounts = parsed.profiles;
         delete parsed.profiles;
       }
 
-      // Migrate profileId → accountId
-      if (parsed.expenses?.some((e: any) => e.profileId)) {
-        parsed.expenses = parsed.expenses.map((e: any) =>
-          e.profileId
-            ? { ...e, accountId: e.profileId }
-            : e
-        );
+      // Migration: profileId → accountId
+      if (
+        parsed.expenses &&
+        parsed.expenses.some((e: any) => e.profileId)
+      ) {
+        parsed.expenses = parsed.expenses.map((e: any) => {
+          if (e.profileId) {
+            const { profileId, ...rest } = e;
+            return { ...rest, accountId: profileId };
+          }
+          return e;
+        });
       }
 
-      return parsed;
+      return parsed as AppData;
     }
 
-    // Very old format
-    const old = localStorage.getItem(OLD_STORAGE_KEY);
-    if (old) {
-      const oldExpenses: Omit<Expense, "accountId">[] = JSON.parse(old);
+    // Very old version: only expenses array
+    const oldRaw = localStorage.getItem(OLD_STORAGE_KEY);
+    if (oldRaw) {
+      console.log("Migrating old local format → new format...");
+      const oldExpenses: Omit<Expense, "accountId">[] = JSON.parse(oldRaw);
 
-      const defaultAcc: Account = {
+      const defaultAccount: Account = {
         id: "default-account-1",
         name: "Personal",
       };
 
+      const newExpenses: Expense[] = oldExpenses.map((exp) => ({
+        ...exp,
+        accountId: defaultAccount.id,
+      }));
+
       const migrated: AppData = {
-        accounts: [defaultAcc],
-        expenses: oldExpenses.map((e) => ({
-          ...e,
-          accountId: defaultAcc.id,
-        })),
+        accounts: [defaultAccount],
+        expenses: newExpenses,
       };
 
       localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(migrated));
@@ -100,17 +110,19 @@ const loadDataFromLocalStorage = (): AppData | null => {
 
       return migrated;
     }
-  } catch (err) {
-    console.error("Local storage parse error:", err);
+  } catch (error) {
+    console.error("Failed to load or parse local storage", error);
   }
 
   return null;
 };
 
-export const loadCachedAppData = () => loadDataFromLocalStorage();
+export const loadCachedAppData = (): AppData | null => {
+  return loadDataFromLocalStorage();
+};
 
 /* -----------------------------------------------------
-   DEFAULT STRUCTURE
+   DEFAULT STRUCTURE (NEW USER)
 ----------------------------------------------------- */
 const getDefaultData = (): AppData => ({
   accounts: [{ id: "default-account-1", name: "Personal" }],
@@ -118,53 +130,60 @@ const getDefaultData = (): AppData => ({
 });
 
 /* -----------------------------------------------------
-   LOAD DATA (FIRESTORE → LOCAL → DEFAULT)
+   MAIN LOAD: FIRESTORE → LOCAL → DEFAULT
 ----------------------------------------------------- */
 export const loadData = async (): Promise<AppData> => {
   const docRef = getAppDataDocRef();
 
-  // Not logged in
+  // If not logged in, only local data is available
   if (!docRef) {
-    return sortExpenses(loadDataFromLocalStorage() || getDefaultData());
+    const local = loadDataFromLocalStorage() || getDefaultData();
+    return sortExpenses(local);
   }
 
   try {
     const snap = await getDoc(docRef);
 
+    // Firestore is the source of truth if it has data
     if (snap.exists()) {
       const firestoreData = snap.data() as AppData;
 
-      // Update local cache
+      // Refresh cache
       localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(firestoreData));
 
       return sortExpenses(firestoreData);
     }
 
-    // Migrate local → Firestore if useful
+    // No Firestore data yet → try localStorage once to migrate
     const local = loadDataFromLocalStorage();
-    if (
+
+    const hasMeaningfulLocalData =
       local &&
       (local.expenses.length > 0 ||
         local.accounts.length > 1 ||
         (local.accounts.length === 1 &&
-          local.accounts[0].name !== "Personal"))
-    ) {
-      await saveData(local);
-      return sortExpenses(local);
-    }
-  } catch (error) {
-    console.error("Firestore fetch failure, using local:", error);
-    return sortExpenses(loadDataFromLocalStorage() || getDefaultData());
-  }
+          local.accounts[0].name !== "Personal"));
 
-  return getDefaultData();
+    if (hasMeaningfulLocalData) {
+      console.log("Migrating local data → Firestore...");
+      await saveData(local!); // this also updates cache
+      return sortExpenses(local!);
+    }
+
+    // Nothing anywhere → default
+    return getDefaultData();
+  } catch (error) {
+    console.error("Firestore load failed; falling back to local cache.", error);
+    const fallback = loadDataFromLocalStorage() || getDefaultData();
+    return sortExpenses(fallback);
+  }
 };
 
 /* -----------------------------------------------------
-   CATEGORIZATION
+   CATEGORY DETECTION
 ----------------------------------------------------- */
 export const categorizeExpense = (expenseName: string): Category => {
-  const name = expenseName.toLowerCase();
+  const lower = expenseName.toLowerCase();
 
   const priority: Category[] = [
     "EMIs",
@@ -181,36 +200,39 @@ export const categorizeExpense = (expenseName: string): Category => {
     "Others",
   ];
 
-  for (const c of priority) {
-    const keywords = CATEGORY_KEYWORDS[c] || [];
-    if (keywords.some((kw) => name.includes(kw))) return c;
+  for (const category of priority) {
+    const keywords = CATEGORY_KEYWORDS[category] || [];
+    if (keywords.some((kw) => lower.includes(kw))) {
+      return category;
+    }
   }
 
   return "Others";
 };
 
 /* -----------------------------------------------------
-   INR Formatting
+   FORMAT INR
 ----------------------------------------------------- */
-export const formatToINR = (amt: number): string =>
-  new Intl.NumberFormat("en-IN", {
+export const formatToINR = (amount: number): string => {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amt);
+  }).format(amount);
+};
 
 /* -----------------------------------------------------
-   EXPENSE CRUD HELPERS
+   EXPENSE HELPERS (ALWAYS PERSIST)
 ----------------------------------------------------- */
 export const addExpenseToData = async (
-  current: AppData,
+  currentData: AppData,
   accountId: string,
   name: string,
   amount: number,
   date: string | Date = new Date()
 ): Promise<AppData> => {
-  const newExpense: Expense = {
+  const expense: Expense = {
     id: crypto.randomUUID(),
     name,
     amount,
@@ -220,8 +242,8 @@ export const addExpenseToData = async (
   };
 
   const updated: AppData = {
-    ...current,
-    expenses: [newExpense, ...current.expenses],
+    ...currentData,
+    expenses: [expense, ...(currentData.expenses || [])],
   };
 
   await saveData(updated);
@@ -229,12 +251,12 @@ export const addExpenseToData = async (
 };
 
 export const deleteExpenseFromData = async (
-  current: AppData,
+  currentData: AppData,
   expenseId: string
 ): Promise<AppData> => {
   const updated: AppData = {
-    ...current,
-    expenses: current.expenses.filter((e) => e.id !== expenseId),
+    ...currentData,
+    expenses: (currentData.expenses || []).filter((e) => e.id !== expenseId),
   };
 
   await saveData(updated);
@@ -242,12 +264,12 @@ export const deleteExpenseFromData = async (
 };
 
 export const updateExpenseInData = async (
-  current: AppData,
+  currentData: AppData,
   updatedExpense: Expense
 ): Promise<AppData> => {
   const updated: AppData = {
-    ...current,
-    expenses: current.expenses.map((e) =>
+    ...currentData,
+    expenses: (currentData.expenses || []).map((e) =>
       e.id === updatedExpense.id ? updatedExpense : e
     ),
   };

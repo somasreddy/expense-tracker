@@ -3,6 +3,6 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  // IMPORTANT: for GitHub Pages + subfolder
   base: "/expense-tracker/",
-  //base: "/",  // FIX for local dev
 });
