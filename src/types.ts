@@ -1,16 +1,4 @@
-export type Category =
-  | "EMIs"
-  | "Rent"
-  | "Bills"
-  | "Utilities"
-  | "Fuel"
-  | "Health"
-  | "Grocery"
-  | "Food"
-  | "Transportation"
-  | "Entertainment"
-  | "Shopping"
-  | "Others";
+export type Category = string;
 
 export interface Expense {
   id: string;
@@ -29,4 +17,10 @@ export interface Account {
 export interface AppData {
   accounts: Account[];
   expenses: Expense[];
+}
+
+export interface Budget {
+  id: string;
+  category: Category;
+  amount: number;
 }

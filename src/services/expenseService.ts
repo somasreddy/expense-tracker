@@ -1,8 +1,8 @@
 // src/services/expenseService.ts
 // Supabase-backed implementation of all data operations for the app.
 
-import { Expense, Account, AppData, Category } from "../types";
-import { CATEGORY_KEYWORDS } from "../constants";
+import { Expense, Account, AppData, Category, Budget } from "../types";
+import { CATEGORY_KEYWORDS, DEFAULT_CATEGORIES } from "../constants";
 import { supabase } from "../supabaseClient";
 import { auth } from "../firebase";
 
@@ -135,7 +135,7 @@ export const loadData = async (): Promise<AppData> => {
       (expenseRows || []).map((e: any) => ({
         id: e.id,
         name: e.name,
-        amount: Number(e.amount), 
+        amount: Number(e.amount),
         date: new Date(e.date).toISOString(),
         accountId: e.profile_id,
         category: e.category as Category,
@@ -145,42 +145,33 @@ export const loadData = async (): Promise<AppData> => {
 
     // 3) Refresh local cache
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(result));
-
     return result;
   } catch (error) {
     console.error("[loadData] Failed to load from Supabase, falling back to cache", error);
     const cached = loadCachedAppData();
     if (cached) return cached;
-    throw error; 
+    throw error;
   }
 };
 
 /* -----------------------------------------------------
    CATEGORY DETECTION & INR FORMATTER
 ----------------------------------------------------- */
-export const categorizeExpense = (expenseName: string): Category => {
+export const categorizeExpense = (expenseName: string, customCategories: string[] = []): Category => {
   const lower = expenseName.toLowerCase();
+
+  // Combine defaults with custom categories (custom ones don't have keywords yet, so we just check exact match or skip)
+  // For now, we only use keywords for default categories.
   const priority: Category[] = [
-    "EMIs",
-    "Rent",
-    "Bills",
-    "Utilities",
-    "Fuel",
-    "Health",
-    "Grocery",
-    "Food",
-    "Transportation",
-    "Entertainment",
-    "Shopping",
-    "Others",
+    ...DEFAULT_CATEGORIES,
+    ...customCategories
   ];
 
   for (const category of priority) {
-    // NOTE: CATEGORY_KEYWORDS must be defined elsewhere
-    // const keywords = CATEGORY_KEYWORDS[category] || []; 
-    // if (keywords.some((kw) => lower.includes(kw))) {
-    //   return category;
-    // }
+    const keywords = CATEGORY_KEYWORDS[category] || [];
+    if (keywords.some((kw) => lower.includes(kw))) {
+      return category;
+    }
   }
 
   return "Others";
@@ -203,7 +194,8 @@ export const createAndPersistExpense = async (
   name: string,
   amount: number,
   date: string | Date,
-  accountId: string
+  accountId: string,
+  category?: Category
 ): Promise<Expense> => {
   const userId = await getCurrentUserId();
   if (!userId) {
@@ -217,7 +209,7 @@ export const createAndPersistExpense = async (
     name,
     amount,
     accountId,
-    category: categorizeExpense(name),
+    category: category || categorizeExpense(name),
     date: date instanceof Date ? date.toISOString() : date,
   };
 
@@ -234,13 +226,13 @@ export const createAndPersistExpense = async (
     });
 
     if (error) {
-        console.error("Supabase Insert Error:", error); 
-        throw new Error(`Failed to insert expense: ${error.message}`);
+      console.error("Supabase Insert Error:", error);
+      throw new Error(`Failed to insert expense: ${error.message}`);
     }
 
   } catch (error) {
     console.error("[createAndPersistExpense] Failed to insert expense into Supabase", error);
-    throw error; 
+    throw error;
   }
 
   return newExpense;
@@ -317,4 +309,129 @@ export const updateExpenseInData = async (
 
   await saveData(updated);
   return sortExpenses(updated);
+};
+
+/* -----------------------------------------------------
+   BUDGET OPERATIONS
+----------------------------------------------------- */
+export const loadBudgets = async (): Promise<Budget[]> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  const { data, error } = await supabase
+    .from("budgets")
+    .select("id, category, amount")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error loading budgets:", error);
+    return [];
+  }
+
+  return (data || []).map((b: any) => ({
+    id: b.id,
+    category: b.category as Category,
+    amount: Number(b.amount),
+  }));
+};
+
+export const upsertBudget = async (category: Category, amount: number): Promise<Budget | null> => {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("User must be logged in to set budgets.");
+
+  // Check if budget exists for this category
+  const { data: existing } = await supabase
+    .from("budgets")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("category", category)
+    .single();
+
+  const payload = {
+    user_id: userId,
+    category,
+    amount,
+  };
+
+  let result;
+  if (existing) {
+    const { data, error } = await supabase
+      .from("budgets")
+      .update(payload)
+      .eq("id", existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    result = data;
+  } else {
+    const { data, error } = await supabase
+      .from("budgets")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    result = data;
+  }
+
+  return result
+    ? { id: result.id, category: result.category, amount: Number(result.amount) }
+    : null;
+};
+
+export const deleteBudget = async (budgetId: string): Promise<void> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return;
+
+  const { error } = await supabase
+    .from("budgets")
+    .delete()
+    .eq("id", budgetId)
+    .eq("user_id", userId);
+
+  if (error) throw error;
+};
+
+/* -----------------------------------------------------
+   CUSTOM CATEGORY OPERATIONS
+----------------------------------------------------- */
+export const loadCategories = async (): Promise<string[]> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  const { data, error } = await supabase
+    .from("custom_categories")
+    .select("name")
+    .eq("user_id", userId)
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Error loading custom categories:", error);
+    return [];
+  }
+
+  return (data || []).map((c: any) => c.name);
+};
+
+export const addCategory = async (name: string): Promise<string | null> => {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("User must be logged in to add categories.");
+
+  // Check if already exists (case insensitive check could be better, but simple for now)
+  if (DEFAULT_CATEGORIES.includes(name)) return null;
+
+  const { data, error } = await supabase
+    .from("custom_categories")
+    .insert({
+      user_id: userId,
+      name: name,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error adding custom category:", error);
+    throw error;
+  }
+
+  return data ? data.name : null;
 };
