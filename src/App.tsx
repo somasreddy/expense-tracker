@@ -11,6 +11,7 @@ import ProfileSelector from "./components/ProfileSelector";
 import ProfileManagerModal from "./components/ProfileManagerModal";
 import EditExpenseModal from "./components/EditExpenseModal";
 import Auth from "./components/Auth";
+import EmailVerification from "./components/EmailVerification";
 import ResetPassword from "./components/ResetPassword";
 import ThemeSwitcher from "./components/ThemeSwitcher";
 import Header from "./components/Header";
@@ -243,6 +244,12 @@ const AppContent: React.FC = () => {
   const isResetPasswordPage = window.location.hash.includes("type=recovery");
   if (isResetPasswordPage) {
     return <ResetPassword />;
+  }
+
+  // Check for email verification page
+  const isEmailVerificationPage = window.location.hash.includes("type=signup");
+  if (isEmailVerificationPage) {
+    return <EmailVerification />;
   }
 
   if (authLoading || (user && dataLoading)) {
