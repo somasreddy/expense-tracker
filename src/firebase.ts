@@ -83,21 +83,30 @@ export const onAuthStateChanged = (
 export const createUserWithEmailAndPassword = async (
   _auth: typeof auth,
   email: string,
-  password: string
+  password: string,
+  displayName?: string
 ) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        display_name: displayName,
+        full_name: displayName, // Some apps use full_name
+      },
+    },
   });
 
   if (error) {
     throw error;
   }
 
+  // If email confirmation is enabled, data.user might be returned but session might be null
+  // We still return the user so the UI can decide what to show
   currentUser = mapSupabaseUser(data.user ?? null);
   notifyListeners();
 
-  return { user: currentUser };
+  return { user: currentUser, session: data.session };
 };
 
 // login with email & password
