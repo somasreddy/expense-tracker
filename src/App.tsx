@@ -10,6 +10,9 @@ import { ThemeProvider, useTheme } from "./services/ThemeContext";
 
 import { Expense, Category, Account } from "./types";
 
+// 👇 Import Supabase client
+import { supabase } from "./supabaseClient"; 
+
 import {
   loadData,
   saveData,
@@ -26,11 +29,11 @@ import Summary from "./components/Summary";
 import ExpenseChart from "./components/ExpenseChart";
 import DateFilter from "./components/DateFilter";
 import ProfileSelector from "./components/ProfileSelector";
-import ProfileManagerModal from "./components/ProfileManagerModal"; // Ensure this is imported
+import ProfileManagerModal from "./components/ProfileManagerModal";
 import Auth from "./components/Auth";
 import ThemeSwitcher from "./components/ThemeSwitcher";
 
-import { auth, onAuthStateChanged, signOut } from "./firebase";
+import { auth, onAuthStateChanged, signOut } from "./firebase"; 
 
 const EXPENSES_PER_PAGE = 10;
 
@@ -50,7 +53,6 @@ const AppContent: React.FC = () => {
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   
-  // ✅ STATE FOR MODAL VISIBILITY
   const [isAccountManagerOpen, setAccountManagerOpen] = useState(false);
 
   const [filter, setFilter] = useState<{ start: string | null; end: string | null }>({
@@ -93,7 +95,7 @@ const AppContent: React.FC = () => {
   }, [user]);
 
   /******************************************
-   * EFFECT 3: LOAD DATA (FIREBASE + CACHE)
+   * EFFECT 3: LOAD DATA (INITIAL SUPABASE LOAD)
    ******************************************/
   useEffect(() => {
     if (!user) {
@@ -109,23 +111,31 @@ const AppContent: React.FC = () => {
     if (cached) {
       setMasterExpenses(cached.expenses);
       setAccounts(cached.accounts);
-      setDataLoading(false);
+      setDataLoading(false); 
     } else {
-      setDataLoading(true);
+      setDataLoading(true); 
     }
 
-    // 2️⃣ Firestore sync in background (non-blocking)
-    loadData().then((fresh) => {
-      setMasterExpenses(fresh.expenses);
-      setAccounts(fresh.accounts);
-      setDataLoading(false);
-    });
+    // 2️⃣ Supabase sync in background (must always resolve loading state)
+    loadData()
+      .then((fresh) => {
+        setMasterExpenses(fresh.expenses);
+        setAccounts(fresh.accounts);
+      })
+      .catch((error) => {
+        console.error("Initial data load failed:", error);
+      })
+      .finally(() => {
+        setDataLoading(false); 
+      });
   }, [user]);
 
   /******************************************
-   * EFFECT 4: AUTO SAVE WHEN DATA CHANGES
+   * EFFECT 4: AUTO SAVE WHEN ACCOUNT DATA CHANGES
    ******************************************/
   useEffect(() => {
+    // This effect now only triggers saveData when accounts change, 
+    // relying on the service file to ignore expenses.
     if (!user || authLoading || dataLoading) return;
 
     const isInitialDefault =
@@ -136,20 +146,79 @@ const AppContent: React.FC = () => {
     if (!isInitialDefault) {
       saveData({ expenses: masterExpenses, accounts });
     }
-  }, [masterExpenses, accounts, user, authLoading, dataLoading]);
+  }, [accounts, user, authLoading, dataLoading]);
+  
+  /******************************************
+   * EFFECT 5: REAL-TIME EXPENSE LISTENER
+   ******************************************/
+  useEffect(() => {
+    if (!user) {
+        setMasterExpenses([]);
+        return;
+    }
+
+    const userId = user.uid; 
+    
+    const channel = supabase
+        .channel(`public:expenses:${userId}`)
+        .on(
+            'postgres_changes',
+            { 
+                event: '*', 
+                schema: 'public', 
+                table: 'expenses', 
+                filter: `user_id=eq.${userId}` 
+            },
+            (payload) => {
+                console.log('Realtime Change Received:', payload.eventType, payload.new);
+                
+                setMasterExpenses((prevExpenses) => {
+                    const newExpenses = [...prevExpenses];
+                    
+                    const toExpense = (data: any): Expense => ({
+                        id: data.id,
+                        name: data.name,
+                        amount: Number(data.amount),
+                        date: data.date,
+                        accountId: data.profile_id,
+                        category: data.category as Category,
+                    });
+                    
+                    if (payload.eventType === 'INSERT') {
+                        return [toExpense(payload.new), ...newExpenses];
+                        
+                    } else if (payload.eventType === 'DELETE') {
+                        return newExpenses.filter(e => e.id !== payload.old.id);
+                        
+                    } else if (payload.eventType === 'UPDATE') {
+                        const updatedIndex = newExpenses.findIndex(e => e.id === payload.new.id);
+                        if (updatedIndex > -1) {
+                            newExpenses[updatedIndex] = toExpense(payload.new);
+                        }
+                        return newExpenses;
+                    }
+                    
+                    return prevExpenses; 
+                });
+            }
+        )
+        .subscribe();
+
+    return () => {
+        supabase.removeChannel(channel); 
+    };
+
+  }, [user]); 
 
   /******************************************
-   * MEMO 1: FILTERED EXPENSES (PROFILE + DATE + CATEGORY)
+   * MEMO 1: FILTERED EXPENSES
    ******************************************/
   const masterFilteredExpenses = useMemo(() => {
     let temp = [...masterExpenses];
 
-    // Profile filter
     if (currentAccountId !== "all") {
       temp = temp.filter((e) => e.accountId === currentAccountId);
     }
-
-    // Date range filter
     if (filter.start && filter.end) {
       const s = new Date(filter.start);
       const e = new Date(filter.end);
@@ -158,15 +227,14 @@ const AppContent: React.FC = () => {
         return d >= s && d <= e;
       });
     }
-
-    // Category filter
     if (categoryFilter) {
       temp = temp.filter((e) => e.category === categoryFilter);
     }
-
-    return temp;
+    
+    return temp.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
   }, [masterExpenses, currentAccountId, filter, categoryFilter]);
-
+  
   /******************************************
    * EFFECT 5: RESET PAGINATION WHEN FILTERS CHANGE
    ******************************************/
@@ -175,7 +243,7 @@ const AppContent: React.FC = () => {
     setPage(1);
     setHasMore(masterFilteredExpenses.length > EXPENSES_PER_PAGE);
   }, [masterFilteredExpenses]);
-
+  
   /******************************************
    * CALLBACK 1: LOAD MORE
    ******************************************/
@@ -213,6 +281,7 @@ const AppContent: React.FC = () => {
     return totals;
   }, [masterFilteredExpenses]);
 
+
   /******************************************
    * EXPENSE OPERATIONS
    ******************************************/
@@ -222,34 +291,30 @@ const AppContent: React.FC = () => {
       return false;
     }
 
-    const newExpense = await createAndPersistExpense(
+    await createAndPersistExpense(
       { expenses: masterExpenses, accounts },
-      currentAccountId,
-      name,
-      amount
+      name, 
+      amount, 
+      new Date().toISOString(), 
+      currentAccountId 
     );
     
-    setMasterExpenses(prevExpenses => [newExpense, ...prevExpenses]);
     return true;
   };
 
   const handleUpdateExpense = async (expense: Expense) => {
-    const updated = await updateExpenseInData(
+    await updateExpenseInData(
       { expenses: masterExpenses, accounts },
       expense
     );
-    setMasterExpenses(updated.expenses);
-    setAccounts(updated.accounts);
     setEditingExpense(null);
   };
 
   const handleDeleteExpense = async (id: string) => {
-    const updated = await deleteExpenseFromData(
+    await deleteExpenseFromData(
       { expenses: masterExpenses, accounts },
       id
     );
-    setMasterExpenses(updated.expenses);
-    setAccounts(updated.accounts);
   };
 
   /******************************************
@@ -349,7 +414,6 @@ const AppContent: React.FC = () => {
         {/* HEADER */}
         <header className="mb-8">
           <div className="flex flex-wrap justify-between items-baseline gap-4">
-            {/* Updated Title Gradient with padding-bottom to avoid clipping */}
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight pb-1">
               <span 
                 className={`bg-clip-text text-transparent bg-gradient-to-r ${currentTheme.accentClass}`}
@@ -395,7 +459,7 @@ const AppContent: React.FC = () => {
 
         {/* MAIN CONTENT GRID */}
         <motion.main
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 lg:col-span-3 lg:grid-cols-3 gap-8"
           variants={{
             hidden: { opacity: 0 },
             visible: {
@@ -494,10 +558,8 @@ const AppContent: React.FC = () => {
         </motion.main>
       </div>
 
-      {/* ✅ THEME SWITCHER (Inside the main div) */}
       <ThemeSwitcher />
 
-      {/* ✅ PROFILE MANAGER MODAL (Inside the main div) */}
       <ProfileManagerModal
         isOpen={isAccountManagerOpen}
         onClose={() => setAccountManagerOpen(false)}
@@ -511,7 +573,6 @@ const AppContent: React.FC = () => {
   );
 };
 
-// Removed inner ThemeProvider since main.tsx handles it
 const App: React.FC = () => {
   return <AppContent />;
 };
