@@ -43,7 +43,6 @@ const sortExpenses = (data: AppData): AppData => {
 
 /* -----------------------------------------------------
    SAVE FULL SNAPSHOT TO SUPABASE (UP-SERT)
-   NOTE: This function now ONLY handles Profile/Account upsert and local cache.
 ----------------------------------------------------- */
 export const saveData = async (data: AppData): Promise<void> => {
   const userId = await getCurrentUserId();
@@ -55,7 +54,7 @@ export const saveData = async (data: AppData): Promise<void> => {
   const accounts = data.accounts || [];
 
   try {
-    // 1) Upsert profiles (REQUIRED for accounts/profiles persistence)
+    // 1) Upsert profiles
     if (accounts.length > 0) {
       const profileRows = accounts.map((a) => ({
         id: a.id,
@@ -64,10 +63,6 @@ export const saveData = async (data: AppData): Promise<void> => {
       }));
       await supabase.from("profiles").upsert(profileRows, { onConflict: "id" });
     }
-
-    // 🔥 REMOVED: Upsert expenses. This was causing the infinite Realtime loop.
-    // Expense persistence is now handled only by createAndPersistExpense, 
-    // updateExpenseInData, and deleteExpenseFromData.
 
     // 2) Update local cache
     const sorted = sortExpenses(data);
@@ -161,7 +156,7 @@ export const loadData = async (): Promise<AppData> => {
 };
 
 /* -----------------------------------------------------
-   CATEGORY DETECTION & INR FORMATTER (Logic is fine)
+   CATEGORY DETECTION & INR FORMATTER
 ----------------------------------------------------- */
 export const categorizeExpense = (expenseName: string): Category => {
   const lower = expenseName.toLowerCase();
@@ -269,6 +264,7 @@ export const deleteExpenseFromData = async (
   };
 
   try {
+    // NOTE: Supabase Delete only needs matching user_id and id for RLS compliance
     await supabase
       .from("expenses")
       .delete()
@@ -301,7 +297,9 @@ export const updateExpenseInData = async (
     ),
   };
 
+  // Persist update to Supabase
   try {
+    // NOTE: The calling component (App.tsx) ensures updatedExpense.amount is a Number.
     await supabase
       .from("expenses")
       .update({

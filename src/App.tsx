@@ -10,7 +10,6 @@ import { ThemeProvider, useTheme } from "./services/ThemeContext";
 
 import { Expense, Category, Account } from "./types";
 
-// 👇 Import Supabase client
 import { supabase } from "./supabaseClient"; 
 
 import {
@@ -106,7 +105,6 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    // 1️⃣ Load cached data instantly
     const cached = loadCachedAppData();
     if (cached) {
       setMasterExpenses(cached.expenses);
@@ -116,7 +114,6 @@ const AppContent: React.FC = () => {
       setDataLoading(true); 
     }
 
-    // 2️⃣ Supabase sync in background (must always resolve loading state)
     loadData()
       .then((fresh) => {
         setMasterExpenses(fresh.expenses);
@@ -134,8 +131,6 @@ const AppContent: React.FC = () => {
    * EFFECT 4: AUTO SAVE WHEN ACCOUNT DATA CHANGES
    ******************************************/
   useEffect(() => {
-    // This effect now only triggers saveData when accounts change, 
-    // relying on the service file to ignore expenses.
     if (!user || authLoading || dataLoading) return;
 
     const isInitialDefault =
@@ -303,18 +298,30 @@ const AppContent: React.FC = () => {
   };
 
   const handleUpdateExpense = async (expense: Expense) => {
+    // 1. Ensure amount is a number before calling service (fixes edit failures)
+    const expenseToUpdate = {
+        ...expense,
+        amount: Number(expense.amount), 
+    };
+    
+    // 2. Call service function
     await updateExpenseInData(
       { expenses: masterExpenses, accounts },
-      expense
+      expenseToUpdate
     );
+    
+    // 3. Clear editing state
     setEditingExpense(null);
   };
 
   const handleDeleteExpense = async (id: string) => {
-    await deleteExpenseFromData(
-      { expenses: masterExpenses, accounts },
-      id
-    );
+    // 🔥 FIX: Add confirmation logic here, assuming the ExpenseList calls this directly
+    if (window.confirm("Are you sure you want to permanently delete this expense?")) {
+        await deleteExpenseFromData(
+          { expenses: masterExpenses, accounts },
+          id
+        );
+    }
   };
 
   /******************************************
