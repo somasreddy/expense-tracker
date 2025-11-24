@@ -11,6 +11,7 @@ import ProfileSelector from "./components/ProfileSelector";
 import ProfileManagerModal from "./components/ProfileManagerModal";
 import EditExpenseModal from "./components/EditExpenseModal";
 import Auth from "./components/Auth";
+import ResetPassword from "./components/ResetPassword";
 import ThemeSwitcher from "./components/ThemeSwitcher";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
@@ -229,7 +230,21 @@ const AppContent: React.FC = () => {
     }
   };
 
+  // // Render
+  // if (authLoading || (user && dataLoading)) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-body)]">
+  //       <div className="animate-spin h-20 w-20 border-t-2 border-b-2 border-amber-400 rounded-full" />
+  //     </div>
+  //   );
+  // }
   // Render
+  // Check for password reset page first
+  const isResetPasswordPage = window.location.hash.includes("type=recovery");
+  if (isResetPasswordPage) {
+    return <ResetPassword />;
+  }
+
   if (authLoading || (user && dataLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-body)]">
