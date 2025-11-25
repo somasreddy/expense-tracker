@@ -140,15 +140,18 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="bg-[var(--bg-card)] w-full max-w-md rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+                    role="dialog"
+                    aria-labelledby="budget-modal-title"
                 >
                     {/* Header */}
                     <div className="p-4 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-surface)]">
-                        <h2 className="text-xl font-bold text-[var(--text-main)]">
+                        <h2 id="budget-modal-title" className="text-xl font-bold text-[var(--text-main)]">
                             Monthly Budgets
                         </h2>
                         <button
                             onClick={onClose}
                             className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                            aria-label="Close modal"
                         >
                             ✕
                         </button>
@@ -158,12 +161,13 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                     <div className="p-4 overflow-y-auto flex-1 space-y-3">
                         {/* Total Budget Distributor */}
                         <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] mb-4 shadow-sm">
-                            <label className="block text-sm font-semibold text-[var(--text-muted)] mb-3">
+                            <label htmlFor="total-budget-input" className="block text-sm font-semibold text-[var(--text-muted)] mb-3">
                                 Total Monthly Budget
                             </label>
 
                             <div className="flex flex-col gap-3">
                                 <AmountInput
+                                    id="total-budget-input"
                                     value={totalBudget}
                                     onChange={setTotalBudget}
                                     className="w-full text-lg py-2"
@@ -176,6 +180,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                                         disabled={isSaving || !totalBudget}
                                         className="button button-secondary button-sm"
                                         title="Save this as the total limit"
+                                        aria-label="Set total budget limit"
                                     >
                                         Set Limit
                                     </button>
@@ -184,6 +189,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                                         disabled={isSaving || !totalBudget}
                                         className="button button-primary button-sm flex items-center gap-1"
                                         title="Smartly distribute based on category priority"
+                                        aria-label="Smartly distribute budget"
                                     >
                                         <span>✨</span> Smart Distribute
                                     </button>
@@ -227,17 +233,20 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                                                     className="w-24 text-sm py-1"
                                                     placeholder="Amount"
                                                     autoFocus
+                                                    aria-label={`Budget amount for ${cat}`}
                                                 />
                                                 <button
                                                     onClick={handleSave}
                                                     disabled={isSaving}
                                                     className="p-1 text-green-500 hover:text-green-400"
+                                                    aria-label={`Save budget for ${cat}`}
                                                 >
                                                     ✓
                                                 </button>
                                                 <button
                                                     onClick={() => setEditingCategory(null)}
                                                     className="p-1 text-red-500 hover:text-red-400"
+                                                    aria-label="Cancel editing"
                                                 >
                                                     ✕
                                                 </button>
@@ -246,6 +255,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                                             <button
                                                 onClick={() => handleEdit(cat, limit)}
                                                 className="text-sm text-[var(--text-highlight)] hover:underline"
+                                                aria-label={`Edit budget for ${cat}`}
                                             >
                                                 {limit > 0 ? "Edit" : "Set Limit"}
                                             </button>

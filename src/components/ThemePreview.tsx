@@ -12,6 +12,12 @@ const getPreviewStyle = (theme: AppTheme): string => {
       return 'bg-gradient-to-br from-cyan-700 to-blue-900';
     case 'neon':
       return 'bg-gradient-to-br from-violet-900 to-pink-700';
+    case 'sunset':
+      return 'bg-gradient-to-br from-orange-700 to-purple-900';
+    case 'forest':
+      return 'bg-gradient-to-br from-green-800 to-emerald-950';
+    case 'midnight':
+      return 'bg-black border-gray-800';
     default:
       return 'bg-gray-500';
   }

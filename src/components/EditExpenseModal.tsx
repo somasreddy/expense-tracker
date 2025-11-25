@@ -23,20 +23,27 @@ const EditExpenseModal: React.FC<Props> = ({ expense, onUpdate, onCancel, custom
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40">
-      <div className="content-surface p-6 max-w-md w-full">
-        <h2 className="text-xl font-bold mb-4">Edit Expense</h2>
+      <div
+        className="content-surface p-6 max-w-md w-full"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-expense-title"
+      >
+        <h2 id="edit-expense-title" className="text-xl font-bold mb-4">Edit Expense</h2>
         <div className="space-y-4 mb-4">
           <div>
-            <label className="block text-sm text-[var(--text-muted)] font-medium mb-1">Name</label>
+            <label htmlFor="edit-name" className="block text-sm text-[var(--text-muted)] font-medium mb-1">Name</label>
             <input
+              id="edit-name"
               className="input-base w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm text-[var(--text-muted)] font-medium mb-1">Amount</label>
+            <label htmlFor="edit-amount" className="block text-sm text-[var(--text-muted)] font-medium mb-1">Amount</label>
             <input
+              id="edit-amount"
               className="input-base w-full"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

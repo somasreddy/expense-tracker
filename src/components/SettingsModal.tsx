@@ -62,16 +62,20 @@ const SettingsModal: React.FC<Props> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-[var(--bg-card)] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="settings-modal-title"
             >
                 {/* Header */}
                 <div className="p-4 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-elevated)]">
                     <div className="flex items-center gap-2">
-                        <Settings className="w-5 h-5 text-amber-500" />
-                        <h2 className="text-xl font-bold text-[var(--text-main)]">Settings</h2>
+                        <Settings className="w-5 h-5 text-amber-500" aria-hidden="true" />
+                        <h2 id="settings-modal-title" className="text-xl font-bold text-[var(--text-main)]">Settings</h2>
                     </div>
                     <button
                         onClick={onClose}
                         className="button-icon"
+                        aria-label="Close settings"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -79,35 +83,44 @@ const SettingsModal: React.FC<Props> = ({
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar */}
-                    <div className="w-48 bg-[var(--bg-elevated)] border-r border-[var(--border-subtle)] flex flex-col p-2 gap-1">
+                    <div className="w-48 bg-[var(--bg-elevated)] border-r border-[var(--border-subtle)] flex flex-col p-2 gap-1" role="tablist" aria-orientation="vertical">
                         <button
                             onClick={() => setActiveTab("general")}
+                            role="tab"
+                            aria-selected={activeTab === "general"}
+                            aria-controls="panel-general"
                             className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors ${activeTab === "general"
                                 ? "bg-amber-500/10 text-amber-500"
                                 : "text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
                                 }`}
                         >
-                            <UserIcon className="w-4 h-4" />
+                            <UserIcon className="w-4 h-4" aria-hidden="true" />
                             General
                         </button>
                         <button
                             onClick={() => setActiveTab("appearance")}
+                            role="tab"
+                            aria-selected={activeTab === "appearance"}
+                            aria-controls="panel-appearance"
                             className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors ${activeTab === "appearance"
                                 ? "bg-amber-500/10 text-amber-500"
                                 : "text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
                                 }`}
                         >
-                            <Palette className="w-4 h-4" />
+                            <Palette className="w-4 h-4" aria-hidden="true" />
                             Appearance
                         </button>
                         <button
                             onClick={() => setActiveTab("data")}
+                            role="tab"
+                            aria-selected={activeTab === "data"}
+                            aria-controls="panel-data"
                             className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors ${activeTab === "data"
                                 ? "bg-amber-500/10 text-amber-500"
                                 : "text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
                                 }`}
                         >
-                            <Database className="w-4 h-4" />
+                            <Database className="w-4 h-4" aria-hidden="true" />
                             Data & Profiles
                         </button>
                     </div>
@@ -118,6 +131,8 @@ const SettingsModal: React.FC<Props> = ({
                             {activeTab === "general" && (
                                 <motion.div
                                     key="general"
+                                    role="tabpanel"
+                                    id="panel-general"
                                     initial={{ opacity: 0, x: 10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -10 }}
@@ -131,11 +146,12 @@ const SettingsModal: React.FC<Props> = ({
 
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="label-base">
+                                                <label htmlFor="display-name-input" className="label-base">
                                                     Display Name
                                                 </label>
                                                 <div className="flex gap-2">
                                                     <input
+                                                        id="display-name-input"
                                                         type="text"
                                                         value={displayName}
                                                         onChange={(e) => setDisplayName(e.target.value)}
@@ -153,10 +169,11 @@ const SettingsModal: React.FC<Props> = ({
                                             </div>
 
                                             <div>
-                                                <label className="label-base">
+                                                <label htmlFor="email-input" className="label-base">
                                                     Email
                                                 </label>
                                                 <input
+                                                    id="email-input"
                                                     type="text"
                                                     value={user.email}
                                                     disabled
@@ -171,6 +188,8 @@ const SettingsModal: React.FC<Props> = ({
                             {activeTab === "appearance" && (
                                 <motion.div
                                     key="appearance"
+                                    role="tabpanel"
+                                    id="panel-appearance"
                                     initial={{ opacity: 0, x: 10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -10 }}
@@ -189,6 +208,8 @@ const SettingsModal: React.FC<Props> = ({
                             {activeTab === "data" && (
                                 <motion.div
                                     key="data"
+                                    role="tabpanel"
+                                    id="panel-data"
                                     initial={{ opacity: 0, x: 10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -10 }}
@@ -211,6 +232,7 @@ const SettingsModal: React.FC<Props> = ({
                                                 <button
                                                     onClick={onManageCategories}
                                                     className="button button-secondary button-sm whitespace-nowrap"
+                                                    aria-label="Manage expense categories"
                                                 >
                                                     Manage
                                                 </button>
@@ -226,6 +248,7 @@ const SettingsModal: React.FC<Props> = ({
                                                 <button
                                                     onClick={onManageProfiles}
                                                     className="button button-secondary button-sm whitespace-nowrap"
+                                                    aria-label="Manage user profiles"
                                                 >
                                                     Manage
                                                 </button>
@@ -242,8 +265,9 @@ const SettingsModal: React.FC<Props> = ({
                                                     onClick={handleExport}
                                                     disabled={isExporting}
                                                     className="button button-secondary button-sm whitespace-nowrap flex items-center gap-2"
+                                                    aria-label="Export data to CSV"
                                                 >
-                                                    <Download className="w-4 h-4" />
+                                                    <Download className="w-4 h-4" aria-hidden="true" />
                                                     {isExporting ? "Exporting..." : "Export CSV"}
                                                 </button>
                                             </div>

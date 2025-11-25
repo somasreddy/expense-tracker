@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Account } from "../types"; 
+import { Account } from "../types";
 
 interface Props {
   isOpen: boolean;
@@ -34,28 +34,33 @@ const ProfileManagerModal: React.FC<Props> = ({
     setEditingId(acc.id);
     setEditingName(acc.name);
   };
-  
+
   const cancelEdit = () => {
     setEditingId(null);
   };
 
   const saveEdit = () => {
     if (!editingId || !editingName.trim()) {
-        if (editingId) setEditingId(null);
-        return;
+      if (editingId) setEditingId(null);
+      return;
     }
     onUpdateAccount(editingId, editingName.trim());
     setEditingId(null);
   };
-  
+
   return (
     // Backdrop
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       {/* Modal Container - Using card-surface for theme consistency */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl p-6 max-w-lg w-full text-[var(--text-main)]"> 
-        
+      <div
+        className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl p-6 max-w-lg w-full text-[var(--text-main)]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-modal-title"
+      >
+
         {/* Header */}
-        <h2 className="text-xl font-bold mb-4">Manage Profiles</h2>
+        <h2 id="profile-modal-title" className="text-xl font-bold mb-4">Manage Profiles</h2>
 
         {/* Account List */}
         <div className="space-y-2 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -67,10 +72,11 @@ const ProfileManagerModal: React.FC<Props> = ({
               {editingId === acc.id ? (
                 // Edit Mode
                 <input
-                  className="input-base w-full text-sm" 
+                  className="input-base w-full text-sm"
                   value={editingName}
                   onChange={(e) => setEditingName(e.target.value)}
                   autoFocus
+                  aria-label={`Edit name for ${acc.name}`}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') saveEdit();
                     if (e.key === 'Escape') cancelEdit();
@@ -80,37 +86,41 @@ const ProfileManagerModal: React.FC<Props> = ({
                 // View Mode
                 <span className="font-medium text-sm truncate">{acc.name}</span>
               )}
-              
+
               <div className="flex gap-2 shrink-0">
                 {editingId === acc.id ? (
                   <>
                     <button
-                      className="p-2 text-xs rounded bg-green-600 text-white hover:bg-green-500 transition-colors" 
+                      className="p-2 text-xs rounded bg-green-600 text-white hover:bg-green-500 transition-colors"
                       onClick={saveEdit}
+                      aria-label="Save changes"
                     >
                       Save
                     </button>
                     <button
-                      className="p-2 text-xs rounded bg-slate-600 text-white hover:bg-slate-500 transition-colors" 
+                      className="p-2 text-xs rounded bg-slate-600 text-white hover:bg-slate-500 transition-colors"
                       onClick={cancelEdit}
+                      aria-label="Cancel editing"
                     >
                       Cancel
                     </button>
                   </>
                 ) : (
                   <>
-                  <button
-                    className="p-2 text-xs rounded bg-blue-600/20 text-blue-500 hover:bg-blue-600 hover:text-white transition-all" 
-                    onClick={() => startEdit(acc)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="p-2 text-xs rounded bg-red-600/20 text-red-500 hover:bg-red-600 hover:text-white transition-all" 
-                    onClick={() => onDeleteAccount(acc.id)}
-                  >
-                    Delete
-                  </button>
+                    <button
+                      className="p-2 text-xs rounded bg-blue-600/20 text-blue-500 hover:bg-blue-600 hover:text-white transition-all"
+                      onClick={() => startEdit(acc)}
+                      aria-label={`Edit profile ${acc.name}`}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="p-2 text-xs rounded bg-red-600/20 text-red-500 hover:bg-red-600 hover:text-white transition-all"
+                      onClick={() => onDeleteAccount(acc.id)}
+                      aria-label={`Delete profile ${acc.name}`}
+                    >
+                      Delete
+                    </button>
                   </>
                 )}
               </div>
@@ -125,12 +135,13 @@ const ProfileManagerModal: React.FC<Props> = ({
             placeholder="New profile name..."
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
+            aria-label="New profile name"
             onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAdd();
+              if (e.key === 'Enter') handleAdd();
             }}
           />
-          <button 
-            className="button button-primary whitespace-nowrap" 
+          <button
+            className="button button-primary whitespace-nowrap"
             onClick={handleAdd}
           >
             Add Profile
@@ -139,9 +150,10 @@ const ProfileManagerModal: React.FC<Props> = ({
 
         {/* Close Button */}
         <div className="flex justify-end mt-4 pt-2">
-          <button 
-            className="button button-secondary text-sm" 
+          <button
+            className="button button-secondary text-sm"
             onClick={onClose}
+            aria-label="Close modal"
           >
             Close
           </button>

@@ -55,7 +55,7 @@ const CategorySelect: React.FC<Props> = ({
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <label className="label-base">
+            <label className="label-base" id="category-select-label">
                 Category
             </label>
 
@@ -64,6 +64,10 @@ const CategorySelect: React.FC<Props> = ({
                 className="input-base w-full flex items-center justify-between cursor-pointer"
                 onClick={() => setIsOpen(!isOpen)}
                 tabIndex={0}
+                role="combobox"
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-labelledby="category-select-label"
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -92,6 +96,7 @@ const CategorySelect: React.FC<Props> = ({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         className="absolute z-50 w-full mt-1 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl max-h-60 flex flex-col"
+                        role="listbox"
                     >
                         {/* Search / Add Input */}
                         <div className="p-2 border-b border-[var(--border-subtle)] sticky top-0 bg-[var(--bg-card)] rounded-t-lg">
@@ -102,6 +107,7 @@ const CategorySelect: React.FC<Props> = ({
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 autoFocus
+                                aria-label="Search categories"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault();
@@ -121,7 +127,10 @@ const CategorySelect: React.FC<Props> = ({
                             {filteredCategories.map((cat) => (
                                 <div
                                     key={cat}
-                                    className={`p-2 text-sm rounded cursor-pointer transition-colors ${selectedCategory === cat
+                                    role="option"
+                                    aria-selected={selectedCategory === cat}
+                                    tabIndex={0}
+                                    className={`p-2 text-sm rounded cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 ${selectedCategory === cat
                                         ? "bg-amber-500/20 text-amber-500"
                                         : "hover:bg-[var(--bg-elevated)] text-[var(--text-main)]"
                                         }`}
@@ -129,6 +138,14 @@ const CategorySelect: React.FC<Props> = ({
                                         onSelectCategory(cat);
                                         setIsOpen(false);
                                         setSearchTerm("");
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            onSelectCategory(cat);
+                                            setIsOpen(false);
+                                            setSearchTerm("");
+                                        }
                                     }}
                                 >
                                     {cat}
@@ -138,8 +155,16 @@ const CategorySelect: React.FC<Props> = ({
                             {/* Add New Option if no exact match */}
                             {searchTerm && !allCategories.some(c => c.toLowerCase() === searchTerm.toLowerCase()) && (
                                 <div
-                                    className="p-2 text-sm text-blue-400 cursor-pointer hover:bg-blue-500/10 rounded flex items-center gap-2"
+                                    role="button"
+                                    tabIndex={0}
+                                    className="p-2 text-sm text-blue-400 cursor-pointer hover:bg-blue-500/10 rounded flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     onClick={handleAdd}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleAdd();
+                                        }
+                                    }}
                                 >
                                     <span>+ Create "{searchTerm}"</span>
                                 </div>
