@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatToINR } from "../utils/currencyUtils";
+import AmountInput from "./AmountInput";
 import { Budget, Category } from "../types";
 import { DEFAULT_CATEGORIES } from "../constants";
 import { calculateSmartDistribution } from "../utils/budgetUtils";
@@ -162,11 +163,10 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                             </label>
 
                             <div className="flex flex-col gap-3">
-                                <input
-                                    type="number"
+                                <AmountInput
                                     value={totalBudget}
-                                    onChange={(e) => setTotalBudget(e.target.value)}
-                                    className="input-base w-full text-lg py-2"
+                                    onChange={setTotalBudget}
+                                    className="w-full text-lg py-2"
                                     placeholder="e.g. 50000"
                                 />
 
@@ -221,11 +221,10 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
 
                                         {isEditing ? (
                                             <div className="flex items-center gap-2">
-                                                <input
-                                                    type="number"
+                                                <AmountInput
                                                     value={amount}
-                                                    onChange={(e) => setAmount(e.target.value)}
-                                                    className="input-base w-24 text-sm py-1"
+                                                    onChange={setAmount}
+                                                    className="w-24 text-sm py-1"
                                                     placeholder="Amount"
                                                     autoFocus
                                                 />

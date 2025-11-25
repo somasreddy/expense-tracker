@@ -34,6 +34,7 @@ export const checkRecentSMS = async (): Promise<number> => {
         // Fetch last 10 messages
         // Updated to use 'limit' instead of 'count' based on definitions.d.ts
         const { messages } = await MessageReader.getMessages({ limit: 10 });
+        // const messages: any[] = []; // Placeholder to fix build
 
         let addedCount = 0;
         // const data = await loadData(); // Unused for now

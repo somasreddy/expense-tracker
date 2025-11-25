@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import CategorySelect from "./CategorySelect";
 import VoiceInput from "./VoiceInput";
+import AmountInput from "./AmountInput";
 import { Category } from "../types";
 import { categorizeExpense } from "../services/expenseService";
 
@@ -131,15 +132,14 @@ const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCat
                     <label htmlFor="expense-amount" className="label-base">
                         Amount
                     </label>
-                    <input
+                    <AmountInput
                         id="expense-amount"
-                        type="number"
                         value={amount}
+                        onChange={setAmount}
                         placeholder="e.g. 1200"
-                        onChange={(e) => setAmount(e.target.value)}
                         min="0.01"
-                        step="0.01"
-                        className="input-base w-full"
+                        step={0.01}
+                        className="w-full"
                         required
                     />
                 </div>
