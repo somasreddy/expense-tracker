@@ -63,6 +63,13 @@ const CategorySelect: React.FC<Props> = ({
             <div
                 className="input-base w-full flex items-center justify-between cursor-pointer"
                 onClick={() => setIsOpen(!isOpen)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsOpen(!isOpen);
+                    }
+                }}
             >
                 <span className={selectedCategory ? "text-[var(--text-main)]" : "text-gray-400"}>
                     {selectedCategory || "Select Category"}

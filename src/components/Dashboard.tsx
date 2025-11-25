@@ -9,6 +9,7 @@ import BudgetProgress from "./BudgetProgress";
 import BudgetManagerModal from "./BudgetManagerModal";
 import { Expense, Category, Budget } from "../types";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { formatToINR } from "../utils/currencyUtils";
 
 interface DashboardProps {
     onAddExpense: (name: string, amount: number) => Promise<boolean>;
@@ -63,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     const [isBudgetsExpanded, setIsBudgetsExpanded] = useState(true);
 
     // Calculate budget progress
-    const activeBudgets = budgets.filter((b) => b.amount > 0);
+    const activeBudgets = budgets.filter((b) => b.amount > 0 && b.category !== "_TOTAL_");
 
     return (
         <motion.main
@@ -108,7 +109,16 @@ const Dashboard: React.FC<DashboardProps> = ({
                             {isBudgetsExpanded ? (
                                 <ChevronUp className="w-5 h-5 text-[var(--text-muted)]" />
                             ) : (
-                                <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" />
+                                <div className="flex items-center gap-2">
+                                    <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" />
+                                    {activeBudgets.length > 0 && (
+                                        <span className="text-sm text-[var(--text-muted)] font-medium">
+                                            {formatToINR(activeBudgets.reduce((sum, b) => sum + (categoryTotals[b.category] || 0), 0))}
+                                            <span className="mx-1">/</span>
+                                            {formatToINR(activeBudgets.reduce((sum, b) => sum + b.amount, 0))}
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </div>
                         <button

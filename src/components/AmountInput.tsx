@@ -45,6 +45,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onKeyDown={handleKeyDown}
+                step="any"
                 className={`input-base pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${className}`}
                 {...props}
             />

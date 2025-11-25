@@ -94,6 +94,46 @@ const getDefaultData = (): AppData => ({
 });
 
 /* -----------------------------------------------------
+   DATA MIGRATION (OLD -> NEW CATEGORIES)
+----------------------------------------------------- */
+const MIGRATION_MAP: Record<string, Category> = {
+  "Rent": "Housing",
+  "Bills": "Utilities",
+  "Grocery": "Food",
+  "Fuel": "Transport",
+  "Transportation": "Transport",
+  "Shopping": "Lifestyle",
+  "Entertainment": "Lifestyle",
+};
+
+const migrateExpenses = async (expenses: Expense[]): Promise<{ migrated: Expense[], hasChanges: boolean }> => {
+  let hasChanges = false;
+  const migrated = expenses.map(e => {
+    if (MIGRATION_MAP[e.category]) {
+      hasChanges = true;
+      return { ...e, category: MIGRATION_MAP[e.category] };
+    }
+    return e;
+  });
+
+  if (hasChanges) {
+    console.log("Migrating expenses to new categories...");
+    // Persist changes to Supabase in background
+    const updates = migrated.filter((e, i) => e.category !== expenses[i].category);
+
+    Promise.all(updates.map(e =>
+      supabase
+        .from("expenses")
+        .update({ category: e.category })
+        .eq("id", e.id)
+    )).then(() => console.log("Migration persistence complete"))
+      .catch(err => console.error("Migration persistence failed", err));
+  }
+
+  return { migrated, hasChanges };
+};
+
+/* -----------------------------------------------------
    MAIN LOAD: SUPABASE
 ----------------------------------------------------- */
 export const loadData = async (): Promise<AppData> => {
@@ -131,7 +171,7 @@ export const loadData = async (): Promise<AppData> => {
 
     if (expenseError) throw expenseError;
 
-    const expenses: Expense[] =
+    let expenses: Expense[] =
       (expenseRows || []).map((e: any) => ({
         id: e.id,
         name: e.name,
@@ -141,9 +181,15 @@ export const loadData = async (): Promise<AppData> => {
         category: e.category as Category,
       })) ?? [];
 
+    // 3) Run Migration
+    const { migrated, hasChanges } = await migrateExpenses(expenses);
+    if (hasChanges) {
+      expenses = migrated;
+    }
+
     const result: AppData = sortExpenses({ accounts, expenses });
 
-    // 3) Refresh local cache
+    // 4) Refresh local cache
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(result));
     return result;
   } catch (error) {
@@ -365,6 +411,64 @@ export const deleteAllExpensesForProfile = async (profileId: string): Promise<vo
 /* -----------------------------------------------------
    BUDGET OPERATIONS
 ----------------------------------------------------- */
+const migrateBudgets = async (budgets: Budget[]): Promise<{ migrated: Budget[], hasChanges: boolean }> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return { migrated: budgets, hasChanges: false };
+
+  let hasChanges = false;
+  const newBudgetMap = new Map<Category, number>();
+  const budgetsToDelete: string[] = [];
+  const budgetsToUpsert: { category: Category, amount: number }[] = [];
+
+  // 1. Map old categories to new ones and aggregate amounts
+  for (const budget of budgets) {
+    const newCategory = MIGRATION_MAP[budget.category] || budget.category;
+
+    if (newCategory !== budget.category) {
+      hasChanges = true;
+      budgetsToDelete.push(budget.id);
+    }
+
+    const currentAmount = newBudgetMap.get(newCategory) || 0;
+    newBudgetMap.set(newCategory, currentAmount + budget.amount);
+  }
+
+  if (!hasChanges) return { migrated: budgets, hasChanges: false };
+
+  console.log("Migrating budgets...");
+
+  // 2. Prepare upserts
+  for (const [category, amount] of newBudgetMap.entries()) {
+    budgetsToUpsert.push({ category, amount });
+  }
+
+  // 3. Persist changes
+  try {
+    // Delete old migrated budgets
+    if (budgetsToDelete.length > 0) {
+      await supabase.from("budgets").delete().in("id", budgetsToDelete);
+    }
+
+    // Upsert new aggregated budgets
+    for (const b of budgetsToUpsert) {
+      await upsertBudget(b.category, b.amount);
+    }
+    console.log("Budget migration persistence complete");
+  } catch (err) {
+    console.error("Budget migration persistence failed", err);
+  }
+
+  // Reload to get real IDs
+  const { data } = await supabase.from("budgets").select("id, category, amount").eq("user_id", userId);
+  const reloaded = (data || []).map((b: any) => ({
+    id: b.id,
+    category: b.category as Category,
+    amount: Number(b.amount),
+  }));
+
+  return { migrated: reloaded, hasChanges: true };
+};
+
 export const loadBudgets = async (): Promise<Budget[]> => {
   const userId = await getCurrentUserId();
   if (!userId) return [];
@@ -379,11 +483,19 @@ export const loadBudgets = async (): Promise<Budget[]> => {
     return [];
   }
 
-  return (data || []).map((b: any) => ({
+  let budgets = (data || []).map((b: any) => ({
     id: b.id,
     category: b.category as Category,
     amount: Number(b.amount),
   }));
+
+  // Run Migration
+  const { migrated, hasChanges } = await migrateBudgets(budgets);
+  if (hasChanges) {
+    budgets = migrated;
+  }
+
+  return budgets;
 };
 
 export const upsertBudget = async (category: Category, amount: number): Promise<Budget | null> => {
@@ -460,7 +572,31 @@ export const loadCategories = async (): Promise<string[]> => {
     return [];
   }
 
-  return (data || []).map((c: any) => c.name);
+  const categories = (data || []).map((c: any) => c.name);
+
+  // MIGRATION: Check if any custom categories are actually old defaults that should be mapped/removed
+  const toDelete: string[] = [];
+  const validCategories = categories.filter(cat => {
+    if (MIGRATION_MAP[cat]) {
+      toDelete.push(cat);
+      return false; // Remove from list
+    }
+    return true;
+  });
+
+  if (toDelete.length > 0) {
+    console.log("Cleaning up obsolete custom categories:", toDelete);
+    // Delete from Supabase in background
+    Promise.all(toDelete.map(name =>
+      supabase
+        .from("custom_categories")
+        .delete()
+        .eq("user_id", userId)
+        .eq("name", name)
+    )).catch(err => console.error("Failed to clean up custom categories", err));
+  }
+
+  return validCategories;
 };
 
 export const addCategory = async (name: string): Promise<string | null> => {

@@ -86,6 +86,7 @@ const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCat
                     type="text"
                     value={name}
                     placeholder="e.g. Groceries, Fuel, EMI..."
+                    tabIndex={1}
                     onChange={(e) => {
                         const newName = e.target.value;
                         setName(newName);
@@ -141,6 +142,7 @@ const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCat
                         step={0.01}
                         className="w-full"
                         required
+                        tabIndex={2}
                     />
                 </div>
             </div>
@@ -160,6 +162,7 @@ const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCat
                     className="button button-primary flex-1"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    tabIndex={3}
                 >
                     Add Expense
                 </motion.button>

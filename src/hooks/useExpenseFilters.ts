@@ -52,12 +52,28 @@ export const useExpenseFilters = (expenses: Expense[], currentAccountId: string)
     );
 
     const categoryTotals = useMemo(() => {
+        // We need totals based on the current date/account filter, BUT ignoring the category filter.
+        // Otherwise, clicking a budget bar (filtering by category) would zero out other budget bars.
+        let temp = [...expenses];
+
+        if (currentAccountId !== "all") {
+            temp = temp.filter((e) => e.accountId === currentAccountId);
+        }
+        if (filter.start && filter.end) {
+            const s = new Date(filter.start);
+            const e = new Date(filter.end);
+            temp = temp.filter((ex) => {
+                const d = new Date(ex.date);
+                return d >= s && d <= e;
+            });
+        }
+
         const totals: Record<Category, number> = {} as any;
-        filteredExpenses.forEach((e) => {
+        temp.forEach((e) => {
             totals[e.category] = (totals[e.category] || 0) + e.amount;
         });
         return totals;
-    }, [filteredExpenses]);
+    }, [expenses, currentAccountId, filter]);
 
     const setDateFilter = (start: string | null, end: string | null) => {
         setFilter({ start, end });

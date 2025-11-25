@@ -1,44 +1,34 @@
 import { Category } from "./types";
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  "EMIs",
-  "Rent",
-  "Bills",
+  "Housing",
   "Utilities",
-  "Fuel",
-  "Health",
-  "Grocery",
   "Food",
-  "Transportation",
-  "Entertainment",
-  "Shopping",
+  "Transport",
+  "Lifestyle",
+  "Health",
+  "EMIs",
   "Others",
 ];
 
 export const CATEGORY_KEYWORDS: Record<string, string[]> = {
   /**
-   * Financial Obligations: Recurring fixed or variable payments
+   * Housing: Rent, Maintenance, Property Tax
    */
-  EMIs: [
-    "emi",
-    "loan",
-    "installment",
-    "mortgage",
-    "financing",
-    "credit card payment",
-    "personal loan",
-    "home loan",
-    "car loan"
-  ],
-  Rent: [
+  Housing: [
     "rent",
     "lease",
     "security deposit",
     "property tax",
     "common area maintenance",
-    "maintenance fee"
+    "maintenance fee",
+    "house tax"
   ],
-  Bills: [
+
+  /**
+   * Utilities: Bills (Electricity, Water, Gas, Internet) + Recurring Services
+   */
+  Utilities: [
     "bill",
     "electricity",
     "water",
@@ -49,13 +39,7 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "internet",
     "cable tv",
     "dth",
-    "landline"
-  ],
-
-  /**
-   * Essential Recurring Expenses
-   */
-  Utilities: [
+    "landline",
     "utility",
     "mobile recharge",
     "phone bill",
@@ -65,35 +49,11 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "sewage",
     "subscription box"
   ],
-  Fuel: [
-    "fuel",
-    "petrol",
-    "diesel",
-    "gasoline",
-    "cng",
-    "hsd",
-    "bharat petroleum",
-    "indian oil",
-    "hpcl",
-    "pump"
-  ],
-  Health: [
-    "hospital",
-    "doctor",
-    "medicine",
-    "pharmacy",
-    "health insurance",
-    "dentist",
-    "optician",
-    "lab test",
-    "physio",
-    "apollo pharmacy"
-  ],
 
   /**
-   * Food and Household Goods
+   * Food: Groceries + Dining Out
    */
-  Grocery: [
+  Food: [
     "grocery",
     "vegetable",
     "instamart",
@@ -110,9 +70,7 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "milk",
     "bread",
     "pantry",
-    "kirana"
-  ],
-  Food: [
+    "kirana",
     "food",
     "restaurant",
     "hotel",
@@ -131,9 +89,19 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
   ],
 
   /**
-   * Travel and Leisure
+   * Transport: Fuel + Public Transport + Vehicle Insurance
    */
-  Transportation: [
+  Transport: [
+    "fuel",
+    "petrol",
+    "diesel",
+    "gasoline",
+    "cng",
+    "hsd",
+    "bharat petroleum",
+    "indian oil",
+    "hpcl",
+    "pump",
     "uber",
     "ola",
     "cab",
@@ -147,23 +115,16 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "taxi",
     "toll",
     "parking",
-    "metro"
+    "metro",
+    "car insurance",
+    "bike insurance",
+    "vehicle insurance"
   ],
-  Entertainment: [
-    "movie",
-    "netflix",
-    "prime video",
-    "spotify",
-    "entertainment",
-    "youtube premium",
-    "aha",
-    "hotstar",
-    "cinema",
-    "gaming",
-    "bookmyshow",
-    "theatre"
-  ],
-  Shopping: [
+
+  /**
+   * Lifestyle: Shopping + Entertainment
+   */
+  Lifestyle: [
     "shopping",
     "amazon",
     "flipkart",
@@ -178,11 +139,58 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "hardware store",
     "jewellery",
     "salon",
-    "cosmetics"
+    "cosmetics",
+    "movie",
+    "netflix",
+    "prime video",
+    "spotify",
+    "entertainment",
+    "youtube premium",
+    "aha",
+    "hotstar",
+    "cinema",
+    "gaming",
+    "bookmyshow",
+    "theatre"
   ],
 
   /**
-   * Default fallback
+   * Health: Medical + Insurance
+   */
+  Health: [
+    "hospital",
+    "doctor",
+    "medicine",
+    "pharmacy",
+    "health insurance",
+    "mediclaim",
+    "dentist",
+    "optician",
+    "lab test",
+    "physio",
+    "apollo pharmacy"
+  ],
+
+  /**
+   * EMIs: Loans + Life/Term Insurance
+   */
+  EMIs: [
+    "emi",
+    "loan",
+    "installment",
+    "mortgage",
+    "financing",
+    "credit card payment",
+    "personal loan",
+    "home loan",
+    "car loan",
+    "life insurance",
+    "term insurance",
+    "insurance premium"
+  ],
+
+  /**
+   * Others: Miscellaneous
    */
   Others: [
     "miscellaneous",

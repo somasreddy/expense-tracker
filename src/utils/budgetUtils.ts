@@ -2,25 +2,17 @@ import { Category } from "../types";
 
 // Weights for different categories (1-10 scale)
 const CATEGORY_WEIGHTS: Record<string, number> = {
-    "rent": 10,
-    "emi": 9,
-    "loan": 9,
-    "investment": 8,
-    "savings": 8,
-    "grocery": 5,
-    "groceries": 5,
-    "food": 4,
-    "bills": 4,
-    "utilities": 4,
-    "fuel": 3,
-    "transport": 3,
-    "health": 3,
-    "medical": 3,
-    "education": 3,
-    "shopping": 2,
-    "entertainment": 2,
-    "travel": 2,
-    "others": 1
+    "housing": 15,
+    "rent": 15,
+    "emi": 15,
+    "emis": 15,
+    "loan": 15,
+    "food": 6,
+    "transport": 5,
+    "utilities": 5,
+    "health": 4,
+    "lifestyle": 3,
+    "others": 2
 };
 
 const DEFAULT_WEIGHT = 2;
@@ -44,10 +36,7 @@ export const calculateSmartDistribution = (totalBudget: number, categories: Cate
     const distribution: Record<Category, number> = {};
     let allocatedSoFar = 0;
 
-    // Sort categories by score (descending) to handle rounding errors on less important ones if needed
-    // but here we just iterate.
-
-    categories.forEach((cat, index) => {
+    categories.forEach((cat) => {
         const rawAmount = (categoryScores[cat] / totalScore) * totalBudget;
         // Round to nearest 100 for cleaner numbers
         let roundedAmount = Math.round(rawAmount / 100) * 100;
@@ -59,13 +48,17 @@ export const calculateSmartDistribution = (totalBudget: number, categories: Cate
         allocatedSoFar += roundedAmount;
     });
 
-    // 3. Adjust for remainder (give/take from the highest weighted category or "Others")
+    // 3. Allocate remainder to "Monthly Savings"
     const remainder = totalBudget - allocatedSoFar;
-    if (remainder !== 0) {
-        // Find category with highest weight (Rent/EMI) to absorb the difference
-        // Or "Others" if it exists
-        const targetCat = categories.find(c => c.toLowerCase().includes("others")) || categories[0];
-        distribution[targetCat] = (distribution[targetCat] || 0) + remainder;
+    if (remainder > 0) {
+        // We cast "Monthly Savings" to Category to satisfy the return type, 
+        // assuming the consumer can handle extra keys.
+        distribution["Monthly Savings" as Category] = remainder;
+    } else if (remainder < 0) {
+        // If we over-allocated due to rounding, deduct from the highest weighted category (Housing/EMI)
+        // or just the first one to keep it simple.
+        const targetCat = categories[0];
+        distribution[targetCat] = Math.max(0, (distribution[targetCat] || 0) + remainder);
     }
 
     return distribution;

@@ -121,31 +121,75 @@ export const useExpenseData = (user: any) => {
     // Operations
     const addExpense = useCallback(
         async (name: string, amount: number, accountId: string, category?: Category, date?: string) => {
-            const newExpense = await createAndPersistExpense(
-                { expenses, accounts },
+            const tempId = `temp-${Date.now()}`;
+            const newExpense: Expense = {
+                id: tempId,
                 name,
                 amount,
-                date ? new Date(date).toISOString() : new Date().toISOString(),
+                date: date ? new Date(date).toISOString() : new Date().toISOString(),
                 accountId,
-                category
-            );
+                category: category || "Others",
+            };
+
+            // Optimistic Update
             setExpenses(prev => [newExpense, ...prev]);
+
+            try {
+                const persistedExpense = await createAndPersistExpense(
+                    { expenses, accounts },
+                    name,
+                    amount,
+                    newExpense.date,
+                    accountId,
+                    category
+                );
+                // Replace temp expense with real one
+                setExpenses(prev => prev.map(e => e.id === tempId ? persistedExpense : e));
+            } catch (error) {
+                console.error("Failed to add expense:", error);
+                // Revert
+                setExpenses(prev => prev.filter(e => e.id !== tempId));
+                throw error;
+            }
         },
         [expenses, accounts]
     );
 
     const updateExpense = useCallback(
         async (expense: Expense) => {
-            const updatedData = await updateExpenseInData({ expenses, accounts }, expense);
-            setExpenses(updatedData.expenses);
+            // Optimistic Update
+            const previousExpenses = [...expenses];
+            setExpenses(prev => prev.map(e => e.id === expense.id ? expense : e));
+
+            try {
+                const updatedData = await updateExpenseInData({ expenses, accounts }, expense);
+                // Ensure state matches server (though it should be same)
+                setExpenses(updatedData.expenses);
+            } catch (error) {
+                console.error("Failed to update expense:", error);
+                // Revert
+                setExpenses(previousExpenses);
+                throw error;
+            }
         },
         [expenses, accounts]
     );
 
     const deleteExpense = useCallback(
         async (id: string) => {
-            const updatedData = await deleteExpenseFromData({ expenses, accounts }, id);
-            setExpenses(updatedData.expenses);
+            // Optimistic Update
+            const previousExpenses = [...expenses];
+            setExpenses(prev => prev.filter(e => e.id !== id));
+
+            try {
+                const updatedData = await deleteExpenseFromData({ expenses, accounts }, id);
+                setExpenses(updatedData.expenses);
+            } catch (error) {
+                console.error("Failed to delete expense:", error);
+                // Revert
+                setExpenses(previousExpenses);
+                throw error;
+            }
         },
         [expenses, accounts]
     );
