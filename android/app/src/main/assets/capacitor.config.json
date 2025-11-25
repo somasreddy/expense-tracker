@@ -1,0 +1,5 @@
+{
+	"appId": "com.escriba.expensetracker",
+	"appName": "ExpenseTracker",
+	"webDir": "dist"
+}
