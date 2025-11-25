@@ -1,24 +1,21 @@
-// Cleaned App.tsx after resolving merge conflicts
 import React, { useState, useEffect } from "react";
 import { auth, signOut } from "./firebase";
 import Auth from "./components/Auth";
 import EmailVerification from "./components/EmailVerification";
 import ResetPassword from "./components/ResetPassword";
-import ThemeSwitcher from "./components/ThemeSwitcher";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
-import Header from "./components/Header";
 import ProfileManagerModal from "./components/ProfileManagerModal";
 import BudgetManagerModal from "./components/BudgetManagerModal";
 import CategoryManagerModal from "./components/CategoryManagerModal";
 import SettingsModal from "./components/SettingsModal";
 import InstallPrompt from "./components/InstallPrompt";
-import ResetPassword from "./components/ResetPassword";
-import EmailVerification from "./components/EmailVerification";
+
 import { useExpenseData } from "./hooks/useExpenseData";
 import { useExpenseFilters } from "./hooks/useExpenseFilters";
 import { useBudgets } from "./hooks/useBudgets";
 import { useTheme } from "./services/ThemeContext";
+
 import { Expense, Category } from "./types";
 import { supabase } from "./supabaseClient";
 import { User } from "@supabase/supabase-js";
@@ -28,7 +25,6 @@ const App: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [currentAccountId, setCurrentAccountId] = useState<string>("all");
 
-  // Auth listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -144,6 +140,21 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateProfile = async (name: string) => {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: { full_name: name },
+      });
+      if (error) throw error;
+      if (data?.user) {
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
+
   const handleSetBudget = async (category: Category, amount: number) => {
     try {
       await setBudget(category, amount);
@@ -153,15 +164,6 @@ const App: React.FC = () => {
     }
   };
 
-  // // Render
-  // if (authLoading || (user && dataLoading)) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-body)]">
-  //       <div className="animate-spin h-20 w-20 border-t-2 border-b-2 border-amber-400 rounded-full" />
-  //     </div>
-  //   );
-  // }
-  // Render
   // Check for password reset page first
   const isResetPasswordPage = window.location.hash.includes("type=recovery");
   if (isResetPasswordPage) {
