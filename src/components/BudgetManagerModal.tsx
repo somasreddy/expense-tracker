@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Category, Budget } from "../types";
+import { AnimatePresence, motion } from "framer-motion";
+import { formatToINR } from "../utils/currencyUtils";
+import { Budget, Category } from "../types";
 import { DEFAULT_CATEGORIES } from "../constants";
-import { formatToINR } from "../services/expenseService";
 import { calculateSmartDistribution } from "../utils/budgetUtils";
+import { useDialog } from "../contexts/DialogContext";
 
 interface BudgetManagerModalProps {
     isOpen: boolean;
@@ -25,17 +26,20 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
 
     // Find the global limit if it exists
     const globalLimitBudget = budgets.find(b => b.category === "_TOTAL_");
-    const globalLimit = globalLimitBudget ? globalLimitBudget.amount : 0;
+    const { showAlert, showConfirm } = useDialog();
 
+    // State
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-    const [amount, setAmount] = useState<string>("");
-    const [totalBudget, setTotalBudget] = useState<string>(globalLimit > 0 ? globalLimit.toString() : "");
+    const [amount, setAmount] = useState("");
+    const [totalBudget, setTotalBudget] = useState(globalLimitBudget?.amount.toString() || "");
     const [isSaving, setIsSaving] = useState(false);
 
-    // Calculate currently allocated amount (excluding the special _TOTAL_ category)
+    // Derived state
     const currentAllocated = budgets
         .filter(b => b.category !== "_TOTAL_")
         .reduce((sum, b) => sum + b.amount, 0);
+
+    const globalLimit = globalLimitBudget?.amount || 0;
 
     const handleEdit = (category: Category, currentAmount: number) => {
         setEditingCategory(category);
@@ -45,16 +49,16 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
     const handleSetTotalLimit = async () => {
         const total = parseFloat(totalBudget);
         if (isNaN(total) || total <= 0) {
-            alert("Please enter a valid total budget");
+            await showAlert("Please enter a valid total budget", "Invalid Input");
             return;
         }
         setIsSaving(true);
         try {
             await onSetBudget("_TOTAL_", total);
-            alert("Total limit updated!");
+            await showAlert("Total limit updated!", "Success");
         } catch (error) {
             console.error(error);
-            alert("Failed to update limit");
+            await showAlert("Failed to update limit", "Error");
         } finally {
             setIsSaving(false);
         }
@@ -63,11 +67,11 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
     const handleDistribute = async () => {
         const total = parseFloat(totalBudget);
         if (isNaN(total) || total <= 0) {
-            alert("Please enter a valid total budget");
+            await showAlert("Please enter a valid total budget", "Invalid Input");
             return;
         }
 
-        if (!window.confirm(`This will smartly distribute ${formatToINR(total)} across all categories based on priority (e.g. Rent > Food > Shopping). Continue?`)) {
+        if (!(await showConfirm(`This will smartly distribute ${formatToINR(total)} across all categories based on priority (e.g. Rent > Food > Shopping). Continue?`, "Confirm Distribution"))) {
             return;
         }
 
@@ -83,10 +87,10 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                 Object.entries(distribution).map(([cat, amt]) => onSetBudget(cat, amt))
             );
 
-            alert("Budgets distributed successfully!");
+            await showAlert("Budgets distributed successfully!", "Success");
         } catch (error) {
             console.error(error);
-            alert("Failed to distribute budgets");
+            await showAlert("Failed to distribute budgets", "Error");
         } finally {
             setIsSaving(false);
         }
@@ -97,7 +101,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
 
         const numAmount = parseFloat(amount);
         if (isNaN(numAmount) || numAmount < 0) {
-            alert("Please enter a valid amount");
+            await showAlert("Please enter a valid amount", "Invalid Input");
             return;
         }
 
@@ -107,7 +111,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
             const newTotalAllocated = currentAllocated - currentCategoryAmount + numAmount;
 
             if (newTotalAllocated > globalLimit) {
-                alert(`Cannot save: Total allocated (${formatToINR(newTotalAllocated)}) exceeds the limit of ${formatToINR(globalLimit)}.\nRemaining available: ${formatToINR(globalLimit - (currentAllocated - currentCategoryAmount))}`);
+                await showAlert(`Cannot save: Total allocated (${formatToINR(newTotalAllocated)}) exceeds the limit of ${formatToINR(globalLimit)}.\nRemaining available: ${formatToINR(globalLimit - (currentAllocated - currentCategoryAmount))}`, "Budget Exceeded");
                 return;
             }
         }
@@ -119,7 +123,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
             setAmount("");
         } catch (error) {
             console.error(error);
-            alert("Failed to save budget");
+            await showAlert("Failed to save budget", "Error");
         } finally {
             setIsSaving(false);
         }

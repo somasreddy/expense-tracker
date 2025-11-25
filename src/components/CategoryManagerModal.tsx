@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Edit2, Trash2, Plus, Check } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { X, Plus, Edit2, Trash2, Check } from "lucide-react";
+import { useDialog } from "../contexts/DialogContext";
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
     customCategories: string[];
-    onAddCategory: (name: string) => Promise<void | string | null>;
+    onAddCategory: (category: string) => Promise<void>;
     onUpdateCategory: (oldName: string, newName: string) => Promise<void>;
     onDeleteCategory: (name: string) => Promise<void>;
 }
@@ -23,6 +24,7 @@ const CategoryManagerModal: React.FC<Props> = ({
     const [editingCategory, setEditingCategory] = useState<string | null>(null);
     const [editValue, setEditValue] = useState("");
     const [loading, setLoading] = useState(false);
+    const { showConfirm } = useDialog();
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,15 +64,15 @@ const CategoryManagerModal: React.FC<Props> = ({
     };
 
     const handleDelete = async (category: string) => {
-        if (!window.confirm(`Are you sure you want to delete "${category}"?`)) return;
-
-        setLoading(true);
-        try {
-            await onDeleteCategory(category);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
+        if (await showConfirm(`Are you sure you want to delete "${category}"?`, "Delete Category")) {
+            setLoading(true);
+            try {
+                await onDeleteCategory(category);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 

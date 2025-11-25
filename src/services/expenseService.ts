@@ -312,6 +312,57 @@ export const updateExpenseInData = async (
 };
 
 /* -----------------------------------------------------
+   PROFILE OPERATIONS
+----------------------------------------------------- */
+export const deleteProfile = async (profileId: string): Promise<void> => {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("User must be logged in to delete profile.");
+
+  const { error } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", profileId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error deleting profile:", error);
+    throw error;
+  }
+};
+
+export const transferExpenses = async (fromProfileId: string, toProfileId: string): Promise<void> => {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("User must be logged in to transfer expenses.");
+
+  const { error } = await supabase
+    .from("expenses")
+    .update({ profile_id: toProfileId })
+    .eq("profile_id", fromProfileId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error transferring expenses:", error);
+    throw error;
+  }
+};
+
+export const deleteAllExpensesForProfile = async (profileId: string): Promise<void> => {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("User must be logged in to delete expenses.");
+
+  const { error } = await supabase
+    .from("expenses")
+    .delete()
+    .eq("profile_id", profileId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error deleting expenses for profile:", error);
+    throw error;
+  }
+};
+
+/* -----------------------------------------------------
    BUDGET OPERATIONS
 ----------------------------------------------------- */
 export const loadBudgets = async (): Promise<Budget[]> => {
@@ -473,4 +524,53 @@ export const deleteCategory = async (name: string): Promise<boolean> => {
   }
 
   return true;
+};
+
+/* -----------------------------------------------------
+   EXPORT DATA
+----------------------------------------------------- */
+export const exportDataToCSV = async (): Promise<void> => {
+  const data = await loadData();
+  const { expenses, accounts } = data;
+
+  if (!expenses || expenses.length === 0) {
+    throw new Error("No expenses to export.");
+  }
+
+  // Map profile IDs to names
+  const profileMap = new Map(accounts.map((a) => [a.id, a.name]));
+
+  // CSV Header
+  const headers = ["ID", "Date", "Name", "Amount", "Category", "Profile"];
+
+  // CSV Rows
+  const rows = expenses.map((e) => {
+    const profileName = profileMap.get(e.accountId) || "Unknown Profile";
+    // Escape quotes in strings
+    const safeName = `"${e.name.replace(/"/g, '""')}"`;
+    const safeCategory = `"${e.category.replace(/"/g, '""')}"`;
+    const safeProfile = `"${profileName.replace(/"/g, '""')}"`;
+
+    return [
+      e.id,
+      new Date(e.date).toLocaleDateString(),
+      safeName,
+      e.amount,
+      safeCategory,
+      safeProfile
+    ].join(",");
+  });
+
+  const csvContent = [headers.join(","), ...rows].join("\n");
+
+  // Create download link
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `expense_tracker_export_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

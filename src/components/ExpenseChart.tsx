@@ -69,8 +69,8 @@ const ExpenseChart: React.FC<Props> = ({
 
   return (
     // Ensured parent container has explicit height/width to resolve previous dimension errors
-    <div className="w-full h-72 min-w-0">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+    <div className="w-full h-full min-h-[250px] min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={250}>
         <PieChart>
           <Pie
             data={data}

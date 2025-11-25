@@ -11,10 +11,8 @@ const STATIC_CACHE = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker...');
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[SW] Caching static assets');
             return cache.addAll(STATIC_CACHE);
         })
     );
@@ -23,13 +21,11 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('[SW] Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -60,10 +56,9 @@ self.addEventListener('fetch', (event) => {
                 return response;
             })
             .catch(() => {
-                // Network failed, try cache
+                // Network failed, try cache (reduced logging for cleaner console)
                 return caches.match(event.request).then((cachedResponse) => {
                     if (cachedResponse) {
-                        console.log('[SW] Serving from cache:', event.request.url);
                         return cachedResponse;
                     }
                     // Return offline page if available
@@ -76,7 +71,6 @@ self.addEventListener('fetch', (event) => {
 // Background sync for offline expenses (future enhancement)
 self.addEventListener('sync', (event) => {
     if (event.tag === 'sync-expenses') {
-        console.log('[SW] Background sync triggered');
         // Future: sync offline expenses when back online
     }
 });

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "@supabase/supabase-js";
 import ThemePreview from "./ThemePreview";
-import { X, User as UserIcon, Palette, Database, Settings } from "lucide-react";
+import { X, User as UserIcon, Palette, Database, Settings, Download } from "lucide-react";
+import { exportDataToCSV } from "../services/expenseService";
 
 interface Props {
     isOpen: boolean;
@@ -28,6 +29,19 @@ const SettingsModal: React.FC<Props> = ({
         user.user_metadata?.full_name || user.user_metadata?.username || ""
     );
     const [isSaving, setIsSaving] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        try {
+            await exportDataToCSV();
+        } catch (error) {
+            console.error("Export failed:", error);
+            alert("Failed to export data. Please try again.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const handleSaveProfile = async () => {
         if (!displayName.trim()) return;
@@ -214,6 +228,23 @@ const SettingsModal: React.FC<Props> = ({
                                                     className="button button-secondary button-sm whitespace-nowrap"
                                                 >
                                                     Manage
+                                                </button>
+                                            </div>
+
+                                            <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] flex justify-between items-center gap-4">
+                                                <div>
+                                                    <h4 className="font-medium">Export Data</h4>
+                                                    <p className="text-sm text-[var(--text-muted)]">
+                                                        Download all your expenses as a CSV file.
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={handleExport}
+                                                    disabled={isExporting}
+                                                    className="button button-secondary button-sm whitespace-nowrap flex items-center gap-2"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                    {isExporting ? "Exporting..." : "Export CSV"}
                                                 </button>
                                             </div>
                                         </div>

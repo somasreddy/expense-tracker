@@ -10,11 +10,14 @@ import BudgetManagerModal from "./components/BudgetManagerModal";
 import CategoryManagerModal from "./components/CategoryManagerModal";
 import SettingsModal from "./components/SettingsModal";
 import InstallPrompt from "./components/InstallPrompt";
+import EditExpenseModal from "./components/EditExpenseModal";
+import DeleteProfileModal from "./components/DeleteProfileModal";
 
 import { useExpenseData } from "./hooks/useExpenseData";
 import { useExpenseFilters } from "./hooks/useExpenseFilters";
 import { useBudgets } from "./hooks/useBudgets";
 import { useTheme } from "./services/ThemeContext";
+import { useDialog } from "./contexts/DialogContext";
 
 import { Expense, Category } from "./types";
 import { supabase } from "./supabaseClient";
@@ -68,6 +71,7 @@ const App: React.FC = () => {
 
   const { budgets, setBudget } = useBudgets(user);
   const { currentTheme } = useTheme();
+  const { showAlert, showConfirm } = useDialog();
 
   // UI state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -76,6 +80,7 @@ const App: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
+  const [deletingProfile, setDeletingProfile] = useState<string | null>(null);
 
   // Handlers
   const handleAddExpense = async (
@@ -85,11 +90,11 @@ const App: React.FC = () => {
     date?: string
   ): Promise<boolean> => {
     if (!currentAccountId || currentAccountId === "all") {
-      alert("Cannot add expense to 'All Profiles'. Please select a specific profile.");
+      await showAlert("Cannot add expense to 'All Profiles'. Please select a specific profile.", "Action Required");
       return false;
     }
     try {
-      // @ts-ignore – addExpense expects accountId as third argument
+      // @ts-ignore
       await addExpense(name, amount, currentAccountId, category, date);
       return true;
     } catch (e) {
@@ -104,22 +109,36 @@ const App: React.FC = () => {
   };
 
   const handleDeleteExpenseClick = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this expense?")) {
+    if (await showConfirm("Are you sure you want to delete this expense?", "Delete Expense")) {
       await deleteExpense(id);
     }
   };
 
-  const handleDeleteAccount = (accountId: string) => {
+  const handleDeleteAccount = async (accountId: string) => {
     if (accounts.length <= 1) {
-      alert("Cannot delete the last profile.");
+      await showAlert("Cannot delete the last profile.", "Action Denied");
       return;
     }
-    const fallback = accounts.find((a) => a.id !== accountId);
-    if (!fallback) return;
-    if (window.confirm(`Delete profile "${accounts.find((a) => a.id === accountId)?.name}"?`)) {
-      deleteAccount(accountId, fallback.id);
-      if (currentAccountId === accountId) setCurrentAccountId(fallback.id);
+    setDeletingProfile(accountId);
+  };
+
+  const handleConfirmDeleteProfile = (deleteExpenses: boolean, targetProfileId?: string) => {
+    if (!deletingProfile) return;
+
+    if (deleteExpenses) {
+      deleteAccount(deletingProfile);
+    } else {
+      deleteAccount(deletingProfile, targetProfileId);
     }
+
+    if (currentAccountId === deletingProfile) {
+      const remaining = accounts.filter(a => a.id !== deletingProfile);
+      if (remaining.length > 0) {
+        setCurrentAccountId(remaining[0].id);
+      }
+    }
+
+    setDeletingProfile(null);
   };
 
   const handleToggleExpenseSelection = (id: string) => {
@@ -151,7 +170,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
+      await showAlert("Failed to update profile. Please try again.", "Error");
     }
   };
 
@@ -160,17 +179,15 @@ const App: React.FC = () => {
       await setBudget(category, amount);
     } catch (error) {
       console.error("Failed to set budget", error);
-      alert("Failed to set budget. Please try again.");
+      await showAlert("Failed to set budget. Please try again.", "Error");
     }
   };
 
-  // Check for password reset page first
   const isResetPasswordPage = window.location.hash.includes("type=recovery");
   if (isResetPasswordPage) {
     return <ResetPassword />;
   }
 
-  // Check for email verification page
   const isEmailVerificationPage = window.location.hash.includes("type=signup");
   if (isEmailVerificationPage) {
     return <EmailVerification />;
@@ -223,10 +240,10 @@ const App: React.FC = () => {
         selectedExpenses={selectedExpenses}
         onToggleExpenseSelection={handleToggleExpenseSelection}
         onToggleSelectAll={handleToggleSelectAll}
-        onDeleteSelected={() => {
+        onDeleteSelected={async () => {
           if (
             selectedExpenses.length > 0 &&
-            window.confirm(`Delete ${selectedExpenses.length} selected expenses?`)
+            await showConfirm(`Delete ${selectedExpenses.length} selected expenses?`, "Delete Multiple")
           ) {
             selectedExpenses.forEach((id) => deleteExpense(id));
             setSelectedExpenses([]);
@@ -271,12 +288,32 @@ const App: React.FC = () => {
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
         customCategories={customCategories || []}
-        onAddCategory={addCategory || (async () => null)}
+        onAddCategory={async (name) => { await addCategory?.(name); }}
         onUpdateCategory={updateCategory || (async () => { })}
         onDeleteCategory={deleteCategory || (async () => { })}
       />
 
       <InstallPrompt />
+
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          onUpdate={handleUpdateExpense}
+          onCancel={() => setEditingExpense(null)}
+          customCategories={customCategories || []}
+          onAddCategory={addCategory || (async () => null)}
+        />
+      )}
+
+      {deletingProfile && (
+        <DeleteProfileModal
+          profileToDelete={accounts.find(a => a.id === deletingProfile)!}
+          availableProfiles={accounts.filter(a => a.id !== deletingProfile)}
+          expenseCount={expenses.filter(e => e.accountId === deletingProfile).length}
+          onConfirm={handleConfirmDeleteProfile}
+          onCancel={() => setDeletingProfile(null)}
+        />
+      )}
     </div>
   );
 };

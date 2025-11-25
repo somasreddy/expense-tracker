@@ -162,12 +162,24 @@ export const useExpenseData = (user: any) => {
         );
     }, []);
 
-    const deleteAccount = useCallback((id: string, fallbackId: string) => {
-        setExpenses((prev) =>
-            prev.map((exp) =>
-                exp.accountId === id ? { ...exp, accountId: fallbackId } : exp
-            )
-        );
+    const deleteAccount = useCallback(async (id: string, fallbackId?: string) => {
+        const { deleteProfile, transferExpenses, deleteAllExpensesForProfile } = await import("../services/expenseService");
+
+        if (fallbackId) {
+            // Transfer expenses to fallback profile
+            await transferExpenses(id, fallbackId);
+            setExpenses((prev) =>
+                prev.map((exp) =>
+                    exp.accountId === id ? { ...exp, accountId: fallbackId } : exp
+                )
+            );
+        } else {
+            // Delete all expenses associated with this profile
+            await deleteAllExpensesForProfile(id);
+            setExpenses((prev) => prev.filter((exp) => exp.accountId !== id));
+        }
+
+        await deleteProfile(id);
         setAccounts((prev) => prev.filter((p) => p.id !== id));
     }, []);
 
