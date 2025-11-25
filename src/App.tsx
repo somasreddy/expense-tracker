@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { auth, signOut } from "./firebase";
 import Auth from "./components/Auth";
+import EmailVerification from "./components/EmailVerification";
+import ResetPassword from "./components/ResetPassword";
+import ThemeSwitcher from "./components/ThemeSwitcher";
+import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
 import Header from "./components/Header";
 import ProfileManagerModal from "./components/ProfileManagerModal";
@@ -149,33 +153,28 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateProfile = async (name: string) => {
-    try {
-      const { data, error } = await supabase.auth.updateUser({
-        data: { full_name: name },
-      });
-      if (error) throw error;
-      if (data.user) {
-        setUser(data.user);
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
-    }
-  };
-
-  // Page routing helpers
+  // // Render
+  // if (authLoading || (user && dataLoading)) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-body)]">
+  //       <div className="animate-spin h-20 w-20 border-t-2 border-b-2 border-amber-400 rounded-full" />
+  //     </div>
+  //   );
+  // }
+  // Render
+  // Check for password reset page first
   const isResetPasswordPage = window.location.hash.includes("type=recovery");
   if (isResetPasswordPage) {
     return <ResetPassword />;
   }
 
+  // Check for email verification page
   const isEmailVerificationPage = window.location.hash.includes("type=signup");
   if (isEmailVerificationPage) {
     return <EmailVerification />;
   }
 
-  if (authLoading || dataLoading) {
+  if (authLoading || (user && dataLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-body)]">
         <div className="animate-spin h-20 w-20 border-t-2 border-b-2 border-amber-400 rounded-full" />

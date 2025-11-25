@@ -162,7 +162,7 @@ export const sendPasswordResetEmail = async (
   console.log("   - Pathname:", window.location.pathname);
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectUrl,
+    redirectTo: window.location.origin + window.location.pathname + "#type=recovery",
   });
 
   if (error) {
