@@ -1,15 +1,44 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Expense Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Optional: favicon; create public/favicon.ico if you like -->
-    <link rel="icon" type="image/svg+xml" href="/expense-tracker/favicon.ico" />
-    <script type="module" crossorigin src="/expense-tracker/assets/index-B3mzaOlp.js"></script>
-    <link rel="stylesheet" crossorigin href="/expense-tracker/assets/index-puDmGN__.css">
-  </head>
-  <body class="bg-slate-950">
-    <div id="root"></div>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Expense Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/expense-tracker/manifest.json" />
+
+  <!-- Theme colors -->
+  <meta name="theme-color" content="#f59e0b" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- PWA Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Expenses" />
+  <meta name="description" content="Track your expenses across multiple profiles with budgeting and analytics" />
+
+  <!-- Optional: favicon; create public/favicon.ico if you like -->
+  <link rel="icon" type="image/svg+xml" href="/expense-tracker/favicon.ico" />
+  <script type="module" crossorigin src="/expense-tracker/assets/index-Bs4Gj6YS.js"></script>
+  <link rel="stylesheet" crossorigin href="/expense-tracker/assets/index-luBUcQcE.css">
+</head>
+
+<body class="bg-slate-950">
+  <div id="root"></div>
+
+  <!-- Register Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/expense-tracker/sw.js')
+          .then(registration => console.log('SW registered:', registration.scope))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+  </script>
+
+</body>
+
 </html>
