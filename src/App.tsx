@@ -22,6 +22,9 @@ import { useDialog } from "./contexts/DialogContext";
 import { Expense, Category } from "./types";
 import { supabase } from "./supabaseClient";
 import { User } from "@supabase/supabase-js";
+import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
+import { startSMSListener, checkRecentSMS } from "./services/smsService";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -33,6 +36,22 @@ const App: React.FC = () => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
     });
+
+    // Initialize SMS Listener (Android Only)
+    if (Capacitor.isNativePlatform()) {
+      startSMSListener((msg) => console.log("SMS Detected:", msg));
+
+      // Check on Resume
+      CapacitorApp.addListener("resume", async () => {
+        console.log("App Resumed. Checking for recent SMS...");
+        const count = await checkRecentSMS();
+        if (count > 0) {
+          // We could show a toast here, but for now just log
+          console.log(`Auto-captured ${count} expenses from SMS.`);
+        }
+      });
+    }
+
     return () => subscription.unsubscribe();
   }, []);
 
