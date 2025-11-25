@@ -8,6 +8,8 @@ import { ThemeProvider } from "./services/ThemeContext";
 
 import { DialogProvider } from "./contexts/DialogContext";
 
+import { ToastProvider } from "./contexts/ToastContext";
+
 // 🔥 Global Styles (Tailwind v4 + themes)
 import "./index.css";
 
@@ -25,7 +27,9 @@ root.render(
   <React.StrictMode>
     <ThemeProvider>
       <DialogProvider>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </DialogProvider>
     </ThemeProvider>
   </React.StrictMode>

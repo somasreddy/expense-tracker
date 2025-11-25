@@ -25,6 +25,8 @@ import { User } from "@supabase/supabase-js";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 import { startSMSListener, checkRecentSMS } from "./services/smsService";
+import { ToastContainer } from "./components/ToastContainer";
+import { useToast } from "./contexts/ToastContext";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -54,6 +56,8 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const { success, error: toastError } = useToast();
 
   // Data hooks
   const {
@@ -115,6 +119,7 @@ const App: React.FC = () => {
     try {
       // @ts-ignore
       await addExpense(name, amount, currentAccountId, category, date);
+      success("Expense added successfully!");
       return true;
     } catch (e) {
       console.error(e);
@@ -124,12 +129,14 @@ const App: React.FC = () => {
 
   const handleUpdateExpense = async (expense: Expense) => {
     await updateExpense({ ...expense, amount: Number(expense.amount) });
+    success("Expense updated successfully!");
     setEditingExpense(null);
   };
 
   const handleDeleteExpenseClick = async (id: string) => {
     if (await showConfirm("Are you sure you want to delete this expense?", "Delete Expense")) {
       await deleteExpense(id);
+      success("Expense deleted successfully!");
     }
   };
 
@@ -149,6 +156,7 @@ const App: React.FC = () => {
     } else {
       deleteAccount(deletingProfile, targetProfileId);
     }
+    success("Profile deleted successfully!");
 
     if (currentAccountId === deletingProfile) {
       const remaining = accounts.filter(a => a.id !== deletingProfile);
@@ -186,6 +194,7 @@ const App: React.FC = () => {
       if (error) throw error;
       if (data?.user) {
         setUser(data.user);
+        success("Profile updated successfully!");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -196,9 +205,47 @@ const App: React.FC = () => {
   const handleSetBudget = async (category: Category, amount: number) => {
     try {
       await setBudget(category, amount);
+      success("Budget saved successfully!");
     } catch (error) {
       console.error("Failed to set budget", error);
       await showAlert("Failed to set budget. Please try again.", "Error");
+    }
+  };
+
+  const handleAddCategory = async (name: string) => {
+    if (addCategory) {
+      const newCat = await addCategory(name);
+      success("Category added successfully!");
+      return newCat;
+    }
+    return null;
+  };
+
+  const handleUpdateCategory = async (oldName: string, newName: string) => {
+    if (updateCategory) {
+      await updateCategory(oldName, newName);
+      success("Category updated successfully!");
+    }
+  };
+
+  const handleDeleteCategory = async (name: string) => {
+    if (deleteCategory) {
+      await deleteCategory(name);
+      success("Category deleted successfully!");
+    }
+  };
+
+  const handleAddAccount = (name: string) => {
+    if (addAccount) {
+      addAccount(name);
+      success("Profile added successfully!");
+    }
+  };
+
+  const handleUpdateAccount = (id: string, name: string) => {
+    if (updateAccount) {
+      updateAccount(id, name);
+      success("Profile updated successfully!");
     }
   };
 
@@ -226,114 +273,117 @@ const App: React.FC = () => {
     (accounts.find((a) => a.id === currentAccountId)?.name || "All Profiles") as string;
 
   return (
-    <div
-      className={`min-h-screen text-[var(--text-main)] p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500 ${currentTheme.gradientClass} ${currentTheme.animationClass}`}
-    >
-      <Header
-        user={user}
-        accounts={accounts}
-        currentAccountId={currentAccountId}
-        onSelectAccount={setCurrentAccountId}
-        onManageAccounts={() => setIsProfileModalOpen(true)}
-        onSignOut={handleSignOut}
-        filter={filter}
-        categoryFilter={categoryFilter}
-        currentProfileName={currentProfileName}
-        filteredTotal={filteredTotal}
-        onManageCategories={() => setIsCategoryModalOpen(true)}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
-      />
+    <>
+      <ToastContainer />
+      <div
+        className={`min-h-screen text-[var(--text-main)] p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500 ${currentTheme.gradientClass} ${currentTheme.animationClass}`}
+      >
+        <Header
+          user={user}
+          accounts={accounts}
+          currentAccountId={currentAccountId}
+          onSelectAccount={setCurrentAccountId}
+          onManageAccounts={() => setIsProfileModalOpen(true)}
+          onSignOut={handleSignOut}
+          filter={filter}
+          categoryFilter={categoryFilter}
+          currentProfileName={currentProfileName}
+          filteredTotal={filteredTotal}
+          onManageCategories={() => setIsCategoryModalOpen(true)}
+          onOpenSettings={() => setIsSettingsModalOpen(true)}
+        />
 
-      <Dashboard
-        onAddExpense={handleAddExpense}
-        filteredTotal={filteredTotal}
-        categoryTotals={categoryTotals}
-        masterFilteredExpenses={masterFilteredExpenses}
-        onSetCategoryFilter={setCategoryFilter}
-        categoryFilter={categoryFilter}
-        onSetFilter={setDateFilter}
-        onClearFilter={clearFilter}
-        displayedExpenses={displayedExpenses}
-        onDeleteExpense={handleDeleteExpenseClick}
-        onEditExpense={setEditingExpense}
-        selectedExpenses={selectedExpenses}
-        onToggleExpenseSelection={handleToggleExpenseSelection}
-        onToggleSelectAll={handleToggleSelectAll}
-        onDeleteSelected={async () => {
-          if (
-            selectedExpenses.length > 0 &&
-            await showConfirm(`Delete ${selectedExpenses.length} selected expenses?`, "Delete Multiple")
-          ) {
-            selectedExpenses.forEach((id) => deleteExpense(id));
-            setSelectedExpenses([]);
-          }
-        }}
-        onLoadMore={loadMoreExpenses}
-        hasMore={hasMore}
-        isLoadingMore={isLoadingMore}
-        budgets={budgets}
-        onSetBudget={handleSetBudget}
-        customCategories={customCategories || []}
-        onAddCategory={addCategory || (async () => null)}
-      />
-
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        user={user}
-        onUpdateProfile={handleUpdateProfile}
-        onManageCategories={() => setIsCategoryModalOpen(true)}
-        onManageProfiles={() => setIsProfileModalOpen(true)}
-      />
-
-      <ProfileManagerModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        accounts={accounts}
-        onAddAccount={addAccount}
-        onDeleteAccount={handleDeleteAccount}
-        onUpdateAccount={updateAccount}
-      />
-
-      <BudgetManagerModal
-        isOpen={isBudgetModalOpen}
-        onClose={() => setIsBudgetModalOpen(false)}
-        customCategories={customCategories || []}
-        budgets={budgets}
-        onSetBudget={handleSetBudget}
-      />
-
-      <CategoryManagerModal
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        customCategories={customCategories || []}
-        onAddCategory={async (name) => { await addCategory?.(name); }}
-        onUpdateCategory={updateCategory || (async () => { })}
-        onDeleteCategory={deleteCategory || (async () => { })}
-      />
-
-      <InstallPrompt />
-
-      {editingExpense && (
-        <EditExpenseModal
-          expense={editingExpense}
-          onUpdate={handleUpdateExpense}
-          onCancel={() => setEditingExpense(null)}
+        <Dashboard
+          onAddExpense={handleAddExpense}
+          filteredTotal={filteredTotal}
+          categoryTotals={categoryTotals}
+          masterFilteredExpenses={masterFilteredExpenses}
+          onSetCategoryFilter={setCategoryFilter}
+          categoryFilter={categoryFilter}
+          onSetFilter={setDateFilter}
+          onClearFilter={clearFilter}
+          displayedExpenses={displayedExpenses}
+          onDeleteExpense={handleDeleteExpenseClick}
+          onEditExpense={setEditingExpense}
+          selectedExpenses={selectedExpenses}
+          onToggleExpenseSelection={handleToggleExpenseSelection}
+          onToggleSelectAll={handleToggleSelectAll}
+          onDeleteSelected={async () => {
+            if (
+              selectedExpenses.length > 0 &&
+              await showConfirm(`Delete ${selectedExpenses.length} selected expenses?`, "Delete Multiple")
+            ) {
+              selectedExpenses.forEach((id) => deleteExpense(id));
+              setSelectedExpenses([]);
+            }
+          }}
+          onLoadMore={loadMoreExpenses}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          budgets={budgets}
+          onSetBudget={handleSetBudget}
           customCategories={customCategories || []}
-          onAddCategory={addCategory || (async () => null)}
+          onAddCategory={handleAddCategory}
         />
-      )}
 
-      {deletingProfile && (
-        <DeleteProfileModal
-          profileToDelete={accounts.find(a => a.id === deletingProfile)!}
-          availableProfiles={accounts.filter(a => a.id !== deletingProfile)}
-          expenseCount={expenses.filter(e => e.accountId === deletingProfile).length}
-          onConfirm={handleConfirmDeleteProfile}
-          onCancel={() => setDeletingProfile(null)}
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          user={user}
+          onUpdateProfile={handleUpdateProfile}
+          onManageCategories={() => setIsCategoryModalOpen(true)}
+          onManageProfiles={() => setIsProfileModalOpen(true)}
         />
-      )}
-    </div>
+
+        <ProfileManagerModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          accounts={accounts}
+          onAddAccount={handleAddAccount}
+          onDeleteAccount={handleDeleteAccount}
+          onUpdateAccount={handleUpdateAccount}
+        />
+
+        <BudgetManagerModal
+          isOpen={isBudgetModalOpen}
+          onClose={() => setIsBudgetModalOpen(false)}
+          customCategories={customCategories || []}
+          budgets={budgets}
+          onSetBudget={handleSetBudget}
+        />
+
+        <CategoryManagerModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          customCategories={customCategories || []}
+          onAddCategory={async (name) => { await handleAddCategory(name); }}
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
+        />
+
+        <InstallPrompt />
+
+        {editingExpense && (
+          <EditExpenseModal
+            expense={editingExpense}
+            onUpdate={handleUpdateExpense}
+            onCancel={() => setEditingExpense(null)}
+            customCategories={customCategories || []}
+            onAddCategory={handleAddCategory}
+          />
+        )}
+
+        {deletingProfile && (
+          <DeleteProfileModal
+            profileToDelete={accounts.find(a => a.id === deletingProfile)!}
+            availableProfiles={accounts.filter(a => a.id !== deletingProfile)}
+            expenseCount={expenses.filter(e => e.accountId === deletingProfile).length}
+            onConfirm={handleConfirmDeleteProfile}
+            onCancel={() => setDeletingProfile(null)}
+          />
+        )}
+      </div>
+    </>
   );
 };
 

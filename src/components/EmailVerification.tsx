@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { useNavigate } from "react-router-dom";
+
 
 const EmailVerification: React.FC = () => {
     const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
