@@ -68,6 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     return (
         <motion.main
+            layout
             className="grid grid-cols-1 lg:col-span-3 lg:grid-cols-3 gap-8"
             variants={{
                 hidden: { opacity: 0 },
@@ -81,6 +82,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         >
             {/* LEFT: FORM + SUMMARY + BUDGETS */}
             <motion.div
+                layout
                 variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
                 className="lg:col-span-1 space-y-6"
             >
@@ -163,6 +165,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {/* RIGHT: CHART + LIST */}
             <motion.div
+                layout
                 variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
                 className="lg:col-span-2 space-y-6"
             >

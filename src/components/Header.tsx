@@ -70,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({
 
                     <button
                         onClick={onOpenSettings}
-                        className="button-icon mr-2"
+                        className="button-icon mr-2 hover:rotate-90 transition-transform duration-500"
                         title="Settings"
                     >
                         <Settings className="w-5 h-5" />
@@ -78,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({
 
                     <motion.button
                         onClick={onSignOut}
-                        className="button button-secondary"
+                        className="button button-danger border-opacity-50"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                     >

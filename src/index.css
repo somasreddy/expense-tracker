@@ -25,6 +25,25 @@ body {
   min-height: 100%;
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
 /* Global Focus Indicator for Accessibility */
 :focus-visible {
   outline: 2px solid var(--text-highlight);
@@ -32,112 +51,240 @@ body {
   border-radius: 4px;
 }
 
+/* =========================================
+   THEME DEFINITIONS
+   ========================================= */
+
 /* DARK – Neo Dark */
 html[data-theme="dark"] {
   --bg-body: #020617;
-  --bg-elevated: #0f172a;
-  /* slightly lighter than body */
-  --bg-card: #020617;
-  --bg-surface: #0f172a;
-  --border-subtle: rgba(148, 163, 184, 0.2);
+  --bg-elevated: rgba(15, 23, 42, 0.8);
+  --bg-card: rgba(2, 6, 23, 0.7);
+  --bg-surface: rgba(15, 23, 42, 0.6);
+  --border-subtle: rgba(148, 163, 184, 0.15);
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
   --text-highlight: #fbbf24;
   /* amber-400 */
-
-  /* Ensures date picker icons are white */
   color-scheme: dark;
 }
 
 /* LIGHT – Soft Light */
 html[data-theme="light"] {
   --bg-body: #f8fafc;
-  --bg-elevated: #ffffff;
-  --bg-card: #ffffff;
-  --bg-surface: #f1f5f9;
-  --border-subtle: #cbd5e1;
+  --bg-elevated: rgba(255, 255, 255, 0.9);
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-surface: rgba(241, 245, 249, 0.7);
+  --border-subtle: rgba(203, 213, 225, 0.6);
   /* slate-300 */
   --text-main: #0f172a;
   /* slate-900 */
   --text-muted: #64748b;
   --text-highlight: #2563eb;
   /* blue-600 */
-
   color-scheme: light;
 }
 
 /* OCEAN – Animated Ocean */
 html[data-theme="ocean"] {
   --bg-body: #0f172a;
-  --bg-elevated: #1e293b;
-  --bg-card: #1e293b;
-  --bg-surface: #1e293b;
+  --bg-elevated: rgba(30, 41, 59, 0.8);
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --bg-surface: rgba(30, 41, 59, 0.6);
   --border-subtle: rgba(148, 163, 184, 0.2);
   --text-main: #f1f5f9;
   --text-muted: #94a3b8;
   --text-highlight: #22d3ee;
   /* cyan-400 */
-
   color-scheme: dark;
 }
 
 /* NEON – Purple Neon */
 html[data-theme="neon"] {
   --bg-body: #0f172a;
-  --bg-elevated: #2e1065;
-  /* deep purple */
-  --bg-card: #2e1065;
-  --bg-surface: #4c1d95;
-  --border-subtle: rgba(192, 132, 252, 0.4);
+  --bg-elevated: rgba(46, 16, 101, 0.8);
+  --bg-card: rgba(46, 16, 101, 0.7);
+  --bg-surface: rgba(76, 29, 149, 0.6);
+  --border-subtle: rgba(192, 132, 252, 0.3);
   --text-main: #f3e8ff;
   --text-muted: #a78bfa;
   --text-highlight: #e879f9;
   /* fuchsia-400 */
-
   color-scheme: dark;
 }
 
 /* SUNSET – Sunset Glow */
 html[data-theme="sunset"] {
   --bg-body: #2a1b3d;
-  --bg-elevated: #44315f;
-  --bg-card: #44315f;
-  --bg-surface: #44315f;
-  --border-subtle: rgba(249, 115, 22, 0.3);
+  --bg-elevated: rgba(68, 49, 95, 0.8);
+  --bg-card: rgba(68, 49, 95, 0.7);
+  --bg-surface: rgba(68, 49, 95, 0.6);
+  --border-subtle: rgba(249, 115, 22, 0.25);
   --text-main: #ffd4c2;
   --text-muted: #fca5a5;
   --text-highlight: #fb923c;
   /* orange-400 */
-
   color-scheme: dark;
 }
 
 /* FOREST – Deep Forest */
 html[data-theme="forest"] {
   --bg-body: #052e16;
-  --bg-elevated: #14532d;
-  --bg-card: #14532d;
-  --bg-surface: #14532d;
+  --bg-elevated: rgba(20, 83, 45, 0.8);
+  --bg-card: rgba(20, 83, 45, 0.7);
+  --bg-surface: rgba(20, 83, 45, 0.6);
   --border-subtle: rgba(74, 222, 128, 0.2);
   --text-main: #dcfce7;
   --text-muted: #86efac;
   --text-highlight: #4ade80;
   /* green-400 */
-
   color-scheme: dark;
 }
 
 /* MIDNIGHT – OLED Black */
 html[data-theme="midnight"] {
   --bg-body: #000000;
-  --bg-elevated: #121212;
-  --bg-card: #121212;
-  --bg-surface: #121212;
+  --bg-elevated: rgba(18, 18, 18, 0.9);
+  --bg-card: rgba(18, 18, 18, 0.8);
+  --bg-surface: rgba(18, 18, 18, 0.7);
   --border-subtle: #333333;
   --text-main: #ffffff;
   --text-muted: #a3a3a3;
   --text-highlight: #ffffff;
+  color-scheme: dark;
+}
 
+/* --- CINEMATIC THEMES --- */
+
+/* MATRIX – Code Rain */
+html[data-theme="matrix"] {
+  --bg-body: #000000;
+  --bg-elevated: rgba(0, 20, 0, 0.9);
+  --bg-card: rgba(0, 30, 0, 0.8);
+  --bg-surface: rgba(0, 40, 0, 0.7);
+  --border-subtle: rgba(0, 255, 0, 0.3);
+  --text-main: #e0ffe0;
+  --text-muted: #008f11;
+  --text-highlight: #00ff41;
+  /* Matrix Green */
+  color-scheme: dark;
+}
+
+/* CYBERPUNK – Night City */
+html[data-theme="cyberpunk"] {
+  --bg-body: #0f0e17;
+  --bg-elevated: rgba(46, 47, 62, 0.8);
+  --bg-card: rgba(35, 35, 45, 0.8);
+  --bg-surface: rgba(46, 47, 62, 0.7);
+  --border-subtle: rgba(255, 0, 60, 0.4);
+  --text-main: #fffffe;
+  --text-muted: #a7a9be;
+  --text-highlight: #ff003c;
+  /* Cyber Red */
+  color-scheme: dark;
+}
+
+/* VAPORWAVE – Retro Future */
+html[data-theme="vaporwave"] {
+  --bg-body: #2d1b4e;
+  --bg-elevated: rgba(89, 28, 135, 0.6);
+  --bg-card: rgba(49, 11, 85, 0.7);
+  --bg-surface: rgba(89, 28, 135, 0.5);
+  --border-subtle: rgba(0, 243, 255, 0.3);
+  --text-main: #fdf2f8;
+  --text-muted: #f0abfc;
+  --text-highlight: #00f3ff;
+  /* Cyan */
+  color-scheme: dark;
+}
+
+/* --- SCIENTIFIC / SPACE --- */
+
+/* NEBULA – Deep Space */
+html[data-theme="nebula"] {
+  --bg-body: #0b0014;
+  --bg-elevated: rgba(30, 0, 50, 0.6);
+  --bg-card: rgba(20, 0, 40, 0.7);
+  --bg-surface: rgba(40, 0, 70, 0.5);
+  --border-subtle: rgba(139, 92, 246, 0.3);
+  --text-main: #e9d5ff;
+  --text-muted: #a78bfa;
+  --text-highlight: #d8b4fe;
+  /* Lavender */
+  color-scheme: dark;
+}
+
+/* SOLAR – Sun Flare */
+html[data-theme="solar"] {
+  --bg-body: #2a1000;
+  --bg-elevated: rgba(67, 20, 7, 0.8);
+  --bg-card: rgba(50, 15, 5, 0.8);
+  --bg-surface: rgba(80, 25, 10, 0.7);
+  --border-subtle: rgba(251, 146, 60, 0.3);
+  --text-main: #ffedd5;
+  --text-muted: #fdba74;
+  --text-highlight: #fbbf24;
+  /* Amber */
+  color-scheme: dark;
+}
+
+/* QUANTUM – Lab White */
+html[data-theme="quantum"] {
+  --bg-body: #f0f9ff;
+  --bg-elevated: rgba(255, 255, 255, 0.9);
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-surface: rgba(224, 242, 254, 0.8);
+  --border-subtle: rgba(14, 165, 233, 0.3);
+  --text-main: #0c4a6e;
+  --text-muted: #0369a1;
+  --text-highlight: #0ea5e9;
+  /* Sky Blue */
+  color-scheme: light;
+}
+
+/* --- NATURE --- */
+
+/* AURORA – Northern Lights */
+html[data-theme="aurora"] {
+  --bg-body: #001510;
+  --bg-elevated: rgba(2, 44, 34, 0.8);
+  --bg-card: rgba(1, 30, 25, 0.8);
+  --bg-surface: rgba(4, 55, 45, 0.7);
+  --border-subtle: rgba(45, 212, 191, 0.3);
+  --text-main: #ccfbf1;
+  --text-muted: #5eead4;
+  --text-highlight: #2dd4bf;
+  /* Teal */
+  color-scheme: dark;
+}
+
+/* VOLCANO – Ash & Fire */
+html[data-theme="volcano"] {
+  --bg-body: #18181b;
+  --bg-elevated: rgba(39, 39, 42, 0.9);
+  --bg-card: rgba(24, 24, 27, 0.9);
+  --bg-surface: rgba(63, 63, 70, 0.8);
+  --border-subtle: rgba(239, 68, 68, 0.3);
+  --text-main: #e4e4e7;
+  --text-muted: #a1a1aa;
+  --text-highlight: #ef4444;
+  /* Red */
+  color-scheme: dark;
+}
+
+/* --- LUXURY --- */
+
+/* GOLD – Luxury */
+html[data-theme="gold"] {
+  --bg-body: #1c1917;
+  --bg-elevated: rgba(41, 37, 36, 0.9);
+  --bg-card: rgba(28, 25, 23, 0.9);
+  --bg-surface: rgba(68, 64, 60, 0.8);
+  --border-subtle: rgba(217, 119, 6, 0.4);
+  --text-main: #fef3c7;
+  --text-muted: #d97706;
+  --text-highlight: #f59e0b;
+  /* Gold */
   color-scheme: dark;
 }
 
@@ -147,21 +294,21 @@ html[data-theme="midnight"] {
 body {
   background-color: var(--bg-body);
   color: var(--text-main);
-  transition: background-color 0.5s, color 0.5s;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 .card-surface {
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  @apply rounded-2xl shadow-xl backdrop-blur-sm;
-  transition: background-color 0.5s, border-color 0.5s;
+  @apply rounded-2xl shadow-xl backdrop-blur-md;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
 }
 
 .content-surface {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  @apply rounded-xl shadow-sm;
-  transition: background-color 0.5s, border-color 0.5s;
+  @apply rounded-xl shadow-sm backdrop-blur-sm;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Inputs (Date, Text, Select) - Standardized look */
@@ -169,39 +316,103 @@ body {
   background-color: var(--bg-elevated);
   color: var(--text-main);
   border: 1px solid var(--border-subtle);
-  @apply rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-colors;
+  @apply rounded-lg px-3 py-2 w-full transition-all duration-200 backdrop-blur-sm;
+}
+
+.input-base:focus {
+  outline: none;
+  border-color: var(--text-highlight);
+  box-shadow: 0 0 0 2px rgba(var(--text-highlight), 0.2);
+  background-color: var(--bg-surface);
+}
+
+/* Chips / Pills */
+.chip {
+  @apply px-3 py-1 text-sm rounded-full font-medium transition-all duration-200 border border-transparent;
+}
+
+.chip-active {
+  background-color: var(--text-highlight);
+  color: var(--bg-body);
+  @apply shadow-md scale-105 font-semibold;
+}
+
+.chip-inactive {
+  background-color: var(--bg-elevated);
+  color: var(--text-muted);
+  border-color: var(--border-subtle);
+  @apply hover:bg-[var(--bg-surface)] hover:text-[var(--text-main)] hover:border-[var(--text-muted)];
 }
 
 /* Buttons */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-primary {
+    background-color: var(--text-highlight);
+    color: var(--bg-body);
+    @apply shadow-md hover:shadow-lg hover:brightness-110;
+  }
+
+  .btn-secondary {
+    background-color: var(--bg-elevated);
+    color: var(--text-main);
+    border: 1px solid var(--border-subtle);
+    @apply hover:bg-[var(--bg-surface)];
+  }
+
+  .btn-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: rgb(220, 38, 38);
+    border: 1px solid rgb(254, 202, 202);
+    @apply hover:bg-red-600 hover:text-white hover:border-red-600;
+  }
+
+  .btn-outline {
+    background-color: transparent;
+    color: var(--text-highlight);
+    border: 1px solid var(--text-highlight);
+    @apply hover:bg-[var(--text-highlight)] hover:text-[var(--bg-body)];
+  }
+
+  .btn-link {
+    background-color: transparent;
+    color: var(--text-highlight);
+    text-decoration: underline;
+    @apply hover:text-[var(--text-main)];
+  }
+}
+
+/* Legacy Button Classes (for compatibility) */
 .button {
-  @apply px-4 py-2 rounded-xl font-medium shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95;
+  @apply px-4 py-2 rounded-xl font-medium shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95 flex items-center justify-center gap-2;
 }
 
 .button-primary {
-  background-color: var(--text-highlight);
+  background: linear-gradient(135deg, var(--text-highlight), var(--text-highlight));
+  filter: brightness(1.1);
   color: var(--bg-body);
-  @apply hover:opacity-90;
+  @apply hover:brightness-125 hover:shadow-lg;
 }
 
 .button-secondary {
   background-color: var(--bg-elevated);
   color: var(--text-main);
   border: 1px solid var(--border-subtle);
-  /* REFACTORED: Use standard CSS for hover to avoid linter errors */
-  transition-property: background-color, color, border-color;
-  transition-duration: 150ms;
-}
-
-.button-secondary:hover {
-  background-color: rgba(51, 65, 85, 0.1);
-  /* slate-700/10 */
+  @apply hover:bg-[var(--bg-surface)] hover:border-[var(--text-muted)] hover:shadow-sm backdrop-blur-sm;
 }
 
 .button-danger {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(239, 68, 68, 0.05);
   color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  @apply hover:bg-red-500 hover:text-white transition-colors;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  @apply hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/20 hover:border-red-500 transition-all duration-300;
 }
 
 .button-sm {
@@ -209,33 +420,33 @@ body {
 }
 
 .button-icon {
-  @apply p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-all;
+  @apply p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-all active:scale-90;
 }
 
 .checkbox-base {
-  @apply w-4 h-4 rounded border-gray-400 cursor-pointer;
-  /* REFACTORED: Use standard CSS for accent color */
+  @apply w-5 h-5 rounded border-gray-400 cursor-pointer transition-transform active:scale-90;
   accent-color: var(--text-highlight);
 }
 
 .label-base {
-  @apply block text-sm text-[var(--text-muted)] font-medium mb-1;
+  @apply block text-sm text-[var(--text-muted)] font-medium mb-1.5;
 }
 
-.chip {
-  @apply px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer border border-transparent;
+/* Form validation error states */
+.input-error {
+  border-color: rgb(239, 68, 68) !important;
+  background-color: rgba(239, 68, 68, 0.05);
 }
 
-.chip-active {
-  background-color: var(--text-highlight);
-  color: var(--bg-body);
+.input-error:focus {
+  ring-color: rgb(239, 68, 68);
+  border-color: rgb(239, 68, 68);
 }
 
-.chip-inactive {
-  background-color: var(--bg-elevated);
-  color: var(--text-muted);
-  border-color: var(--border-subtle);
-  @apply hover:bg-[var(--bg-surface)] hover:text-[var(--text-main)];
+.form-field-error input,
+.form-field-error select,
+.form-field-error textarea {
+  border-color: rgb(239, 68, 68);
 }
 
 /* -----------------------------------------------------
@@ -264,7 +475,7 @@ body {
 }
 
 .animate-shift {
-  animation: gradient-shift 8s ease infinite alternate;
+  animation: gradient-shift 12s ease infinite alternate;
 }
 
 /* Specific Theme Gradients */
@@ -283,85 +494,39 @@ body {
 .animate-gradient-forest {
   background-image: linear-gradient(-45deg, #022c22, #14532d, #064e3b);
 }
-/* Button component utilities */
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors;
-  }
 
-  .btn-sm {
-    @apply px-3 py-1.5 text-sm;
-  }
-
-  .btn-primary {
-    background-color: var(--text-highlight);
-    color: var(--bg-body);
-  }
-  .btn-primary:hover {
-    opacity: 0.9;
-  }
-
-  .btn-secondary {
-    background-color: var(--bg-elevated);
-    color: var(--text-main);
-    border: 1px solid var(--border-subtle);
-  }
-  .btn-secondary:hover {
-    background-color: rgba(51, 65, 85, 0.1);
-  }
-
-  .btn-danger {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: rgb(220, 38, 38);
-    border: 1px solid rgb(254, 202, 202);
-  }
-  .btn-danger:hover {
-    background-color: rgb(239, 68, 68);
-    color: white;
-  }
-
-  .btn-outline {
-    background-color: transparent;
-    color: var(--text-highlight);
-    border: 1px solid var(--text-highlight);
-  }
-  .btn-outline:hover {
-    opacity: 0.8;
-  }
-
-  .btn-link {
-    background-color: transparent;
-    color: var(--text-highlight);
-    text-decoration: underline;
-  }
-  .btn-link:hover {
-    opacity: 0.8;
-  }
+.animate-gradient-matrix {
+  background-image: linear-gradient(0deg, #000000, #001a00, #003300);
 }
 
-/* Form validation error states */
-.input-error {
-  border-color: rgb(239, 68, 68) !important;
-  background-color: rgba(239, 68, 68, 0.05);
+.animate-gradient-cyberpunk {
+  background-image: linear-gradient(-45deg, #2b213a, #111827, #2e1065);
 }
 
-.input-error:focus {
-  ring-color: rgb(239, 68, 68);
-  border-color: rgb(239, 68, 68);
+.animate-gradient-vaporwave {
+  background-image: linear-gradient(-45deg, #2e1065, #4a044e, #701a75);
 }
 
-.form-field-error input,
-.form-field-error select,
-.form-field-error textarea {
-  border-color: rgb(239, 68, 68);
+.animate-gradient-nebula {
+  background-image: linear-gradient(-45deg, #0f172a, #312e81, #4c1d95);
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
+.animate-gradient-solar {
+  background-image: linear-gradient(-45deg, #451a03, #7c2d12, #9a3412);
 }
 
-.shake {
-  animation: shake 0.5s ease-in-out;
+.animate-gradient-quantum {
+  background-image: linear-gradient(-45deg, #f0f9ff, #e0f2fe, #bae6fd);
+}
+
+.animate-gradient-aurora {
+  background-image: linear-gradient(-45deg, #022c22, #134e4a, #115e59);
+}
+
+.animate-gradient-volcano {
+  background-image: linear-gradient(-45deg, #18181b, #450a0a, #7f1d1d);
+}
+
+.animate-gradient-gold {
+  background-image: linear-gradient(-45deg, #1c1917, #451a03, #78350f);
 }

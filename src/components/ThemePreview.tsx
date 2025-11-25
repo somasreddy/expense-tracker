@@ -1,54 +1,39 @@
 import { useTheme, AppTheme } from "../services/ThemeContext";
 
-// Mapping the simplified theme IDs to simple background classes for the preview box.
-// This is now derived from the themes.ts file, which is exposed via the context.
-const getPreviewStyle = (theme: AppTheme): string => {
-  switch (theme.id) {
-    case 'dark':
-      return 'bg-slate-900 border-slate-700';
-    case 'light':
-      return 'bg-white border-slate-300 text-slate-900';
-    case 'ocean':
-      return 'bg-gradient-to-br from-cyan-700 to-blue-900';
-    case 'neon':
-      return 'bg-gradient-to-br from-violet-900 to-pink-700';
-    case 'sunset':
-      return 'bg-gradient-to-br from-orange-700 to-purple-900';
-    case 'forest':
-      return 'bg-gradient-to-br from-green-800 to-emerald-950';
-    case 'midnight':
-      return 'bg-black border-gray-800';
-    default:
-      return 'bg-gray-500';
-  }
-};
-
 export default function ThemePreview() {
   const { theme, setTheme, themes } = useTheme();
 
   return (
-    <div className="grid grid-cols-2 gap-4 p-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
       {themes.map((t) => (
         <div
           key={t.id}
           onClick={() => setTheme(t.id)}
-          className={`h-24 rounded-xl cursor-pointer shadow-lg overflow-hidden relative border transition-all duration-300
-            ${getPreviewStyle(t)} ${theme === t.id ? 'ring-4 ring-offset-2 ring-offset-slate-900 ring-amber-400' : ''}`}
+          className={`h-24 rounded-xl cursor-pointer shadow-lg overflow-hidden relative border transition-all duration-300 transform hover:scale-105
+            ${theme === t.id ? 'ring-4 ring-offset-2 ring-offset-[var(--bg-body)] ring-[var(--text-highlight)]' : 'border-[var(--border-subtle)] hover:border-[var(--text-highlight)]'}
+          `}
         >
-          {/* Animated Background Preview (only for animated themes) */}
-          {t.gradientClass && (
-            <div
-              className={`absolute inset-0 ${t.gradientClass} ${t.animationClass} bg-size-200`}
-              style={{ animationDuration: '3s', animationIterationCount: 'infinite' }}
-            ></div>
-          )}
+          {/* Background Preview */}
+          <div
+            className={`absolute inset-0 ${t.gradientClass} ${t.animationClass} bg-size-200`}
+            style={{ animationDuration: '6s', animationIterationCount: 'infinite' }}
+          ></div>
 
-          {/* Label */}
-          <div className={`absolute bottom-0 left-0 right-0 p-2 text-center text-xs font-semibold backdrop-blur-sm 
-                         ${t.id === 'light' ? 'bg-slate-900/50 text-slate-100' : 'bg-slate-100/10 text-white'}`}
-          >
-            {t.label}
+          {/* Label Overlay */}
+          <div className="absolute inset-0 flex items-end justify-center">
+            <div className="w-full p-2 text-center text-xs font-bold backdrop-blur-md bg-black/30 text-white truncate">
+              {t.label}
+            </div>
           </div>
+
+          {/* Active Indicator Icon */}
+          {theme === t.id && (
+            <div className="absolute top-2 right-2 bg-[var(--text-highlight)] text-[var(--bg-body)] rounded-full p-1 shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+          )}
         </div>
       ))}
     </div>

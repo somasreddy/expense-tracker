@@ -4,6 +4,7 @@ import { User } from "@supabase/supabase-js";
 import ThemePreview from "./ThemePreview";
 import { X, User as UserIcon, Palette, Database, Settings, Download } from "lucide-react";
 import { exportDataToCSV } from "../services/expenseService";
+import { useTheme } from "../services/ThemeContext";
 
 interface Props {
     isOpen: boolean;
@@ -24,6 +25,7 @@ const SettingsModal: React.FC<Props> = ({
     onManageCategories,
     onManageProfiles,
 }) => {
+    const { currentTheme } = useTheme();
     const [activeTab, setActiveTab] = useState<Tab>("general");
     const [displayName, setDisplayName] = useState(
         user.user_metadata?.full_name || user.user_metadata?.username || ""
@@ -69,7 +71,7 @@ const SettingsModal: React.FC<Props> = ({
                 {/* Header */}
                 <div className="p-4 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-elevated)]">
                     <div className="flex items-center gap-2">
-                        <Settings className="w-5 h-5 text-amber-500" aria-hidden="true" />
+                        <Settings className="w-5 h-5" style={{ color: "var(--text-highlight)" }} aria-hidden="true" />
                         <h2 id="settings-modal-title" className="text-xl font-bold text-[var(--text-main)]">Settings</h2>
                     </div>
                     <button
@@ -90,7 +92,7 @@ const SettingsModal: React.FC<Props> = ({
                             aria-selected={activeTab === "general"}
                             aria-controls="panel-general"
                             className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors ${activeTab === "general"
-                                ? "bg-amber-500/10 text-amber-500"
+                                ? "bg-[var(--bg-surface)] text-[var(--text-highlight)] shadow-sm"
                                 : "text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
                                 }`}
                         >
@@ -103,7 +105,7 @@ const SettingsModal: React.FC<Props> = ({
                             aria-selected={activeTab === "appearance"}
                             aria-controls="panel-appearance"
                             className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors ${activeTab === "appearance"
-                                ? "bg-amber-500/10 text-amber-500"
+                                ? "bg-[var(--bg-surface)] text-[var(--text-highlight)] shadow-sm"
                                 : "text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
                                 }`}
                         >
@@ -116,7 +118,7 @@ const SettingsModal: React.FC<Props> = ({
                             aria-selected={activeTab === "data"}
                             aria-controls="panel-data"
                             className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors ${activeTab === "data"
-                                ? "bg-amber-500/10 text-amber-500"
+                                ? "bg-[var(--bg-surface)] text-[var(--text-highlight)] shadow-sm"
                                 : "text-[var(--text-muted)] hover:bg-[var(--bg-hover)]"
                                 }`}
                         >
