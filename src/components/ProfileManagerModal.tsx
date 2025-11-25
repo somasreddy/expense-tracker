@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Account } from "../types";
+import { ErrorMessage } from "./ErrorMessage";
+import { isNotBlank, isUnique } from "../utils/validators";
 
 interface Props {
   isOpen: boolean;
@@ -21,31 +23,65 @@ const ProfileManagerModal: React.FC<Props> = ({
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [newNameError, setNewNameError] = useState<string | undefined>();
+  const [editNameError, setEditNameError] = useState<string | undefined>();
 
   if (!isOpen) return null;
 
   const handleAdd = () => {
-    if (!newName.trim()) return;
+    // Validate not blank
+    const blankCheck = isNotBlank(newName);
+    if (!blankCheck.isValid) {
+      setNewNameError(blankCheck.error);
+      return;
+    }
+
+    // Validate unique
+    const existingNames = accounts.map(a => a.name);
+    const uniqueCheck = isUnique(newName, existingNames);
+    if (!uniqueCheck.isValid) {
+      setNewNameError(uniqueCheck.error || "A profile with this name already exists");
+      return;
+    }
+
     onAddAccount(newName.trim());
     setNewName("");
+    setNewNameError(undefined);
   };
 
   const startEdit = (acc: Account) => {
     setEditingId(acc.id);
     setEditingName(acc.name);
+    setEditNameError(undefined);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
+    setEditNameError(undefined);
   };
 
   const saveEdit = () => {
-    if (!editingId || !editingName.trim()) {
-      if (editingId) setEditingId(null);
+    if (!editingId) return;
+
+    // Validate not blank
+    const blankCheck = isNotBlank(editingName);
+    if (!blankCheck.isValid) {
+      setEditNameError(blankCheck.error);
       return;
     }
+
+    // Validate unique (excluding current editing name)
+    const existingNames = accounts.filter(a => a.id !== editingId).map(a => a.name);
+    const currentName = accounts.find(a => a.id === editingId)?.name;
+    const uniqueCheck = isUnique(editingName, existingNames, currentName);
+    if (!uniqueCheck.isValid) {
+      setEditNameError(uniqueCheck.error || "A profile with this name already exists");
+      return;
+    }
+
     onUpdateAccount(editingId, editingName.trim());
     setEditingId(null);
+    setEditNameError(undefined);
   };
 
   return (
@@ -71,17 +107,23 @@ const ProfileManagerModal: React.FC<Props> = ({
             >
               {editingId === acc.id ? (
                 // Edit Mode
-                <input
-                  className="input-base w-full text-sm"
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                  autoFocus
-                  aria-label={`Edit name for ${acc.name}`}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') saveEdit();
-                    if (e.key === 'Escape') cancelEdit();
-                  }}
-                />
+                <div className="flex-1">
+                  <input
+                    className={`input-base w-full text-sm ${editNameError ? 'input-error' : ''}`}
+                    value={editingName}
+                    onChange={(e) => {
+                      setEditingName(e.target.value);
+                      setEditNameError(undefined); // Clear error on change
+                    }}
+                    autoFocus
+                    aria-label={`Edit name for ${acc.name}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveEdit();
+                      if (e.key === 'Escape') cancelEdit();
+                    }}
+                  />
+                  <ErrorMessage message={editNameError} show={!!editNameError} />
+                </div>
               ) : (
                 // View Mode
                 <span className="font-medium text-sm truncate">{acc.name}</span>
@@ -91,14 +133,14 @@ const ProfileManagerModal: React.FC<Props> = ({
                 {editingId === acc.id ? (
                   <>
                     <button
-                      className="p-2 text-xs rounded bg-green-600 text-white hover:bg-green-500 transition-colors"
+                      className="btn btn-primary btn-sm"
                       onClick={saveEdit}
                       aria-label="Save changes"
                     >
                       Save
                     </button>
                     <button
-                      className="p-2 text-xs rounded bg-slate-600 text-white hover:bg-slate-500 transition-colors"
+                      className="btn btn-secondary btn-sm"
                       onClick={cancelEdit}
                       aria-label="Cancel editing"
                     >
@@ -108,14 +150,14 @@ const ProfileManagerModal: React.FC<Props> = ({
                 ) : (
                   <>
                     <button
-                      className="p-2 text-xs rounded bg-blue-600/20 text-blue-500 hover:bg-blue-600 hover:text-white transition-all"
+                      className="btn btn-outline btn-sm"
                       onClick={() => startEdit(acc)}
                       aria-label={`Edit profile ${acc.name}`}
                     >
                       Edit
                     </button>
                     <button
-                      className="p-2 text-xs rounded bg-red-600/20 text-red-500 hover:bg-red-600 hover:text-white transition-all"
+                      className="btn btn-danger btn-sm"
                       onClick={() => onDeleteAccount(acc.id)}
                       aria-label={`Delete profile ${acc.name}`}
                     >
@@ -129,29 +171,37 @@ const ProfileManagerModal: React.FC<Props> = ({
         </div>
 
         {/* Add New Account Form */}
-        <div className="flex gap-2 pt-4 border-t border-[var(--border-subtle)]">
-          <input
-            className="input-base w-full"
-            placeholder="New profile name..."
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            aria-label="New profile name"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleAdd();
-            }}
-          />
-          <button
-            className="button button-primary whitespace-nowrap"
-            onClick={handleAdd}
-          >
-            Add Profile
-          </button>
+        <div className="pt-4 border-t border-[var(--border-subtle)]">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <input
+                className={`input-base w-full ${newNameError ? 'input-error' : ''}`}
+                placeholder="New profile name..."
+                value={newName}
+                onChange={(e) => {
+                  setNewName(e.target.value);
+                  setNewNameError(undefined); // Clear error on change
+                }}
+                aria-label="New profile name"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAdd();
+                }}
+              />
+              <ErrorMessage message={newNameError} show={!!newNameError} />
+            </div>
+            <button
+              className="btn btn-primary"
+              onClick={handleAdd}
+            >
+              Add Profile
+            </button>
+          </div>
         </div>
 
         {/* Close Button */}
         <div className="flex justify-end mt-4 pt-2">
           <button
-            className="button button-secondary text-sm"
+            className="btn btn-secondary"
             onClick={onClose}
             aria-label="Close modal"
           >

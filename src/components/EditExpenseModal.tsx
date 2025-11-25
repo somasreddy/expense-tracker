@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Expense, Category } from "../types";
 import CategorySelect from "./CategorySelect";
+import { ErrorMessage } from "./ErrorMessage";
+import { isNotBlank, isValidAmount } from "../utils/validators";
 
 interface Props {
   expense: Expense;
@@ -14,10 +16,25 @@ const EditExpenseModal: React.FC<Props> = ({ expense, onUpdate, onCancel, custom
   const [name, setName] = useState(expense.name);
   const [amount, setAmount] = useState(expense.amount.toString());
   const [category, setCategory] = useState<Category>(expense.category);
+  const [nameError, setNameError] = useState<string | undefined>();
+  const [amountError, setAmountError] = useState<string | undefined>();
 
   const handleSave = () => {
+    // Validate name
+    const nameCheck = isNotBlank(name);
+    if (!nameCheck.isValid) {
+      setNameError(nameCheck.error || "Expense name is required");
+      return;
+    }
+
+    // Validate amount
+    const amountCheck = isValidAmount(amount);
+    if (!amountCheck.isValid) {
+      setAmountError(amountCheck.error);
+      return;
+    }
+
     const amt = parseFloat(amount);
-    if (!name.trim() || isNaN(amt) || amt <= 0) return;
     onUpdate({ ...expense, name: name.trim(), amount: amt, category });
   };
 
@@ -35,19 +52,29 @@ const EditExpenseModal: React.FC<Props> = ({ expense, onUpdate, onCancel, custom
             <label htmlFor="edit-name" className="block text-sm text-[var(--text-muted)] font-medium mb-1">Name</label>
             <input
               id="edit-name"
-              className="input-base w-full"
+              className={`input-base w-full ${nameError ? 'input-error' : ''}`}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setNameError(undefined); // Clear error on change
+              }}
             />
+            <ErrorMessage message={nameError} show={!!nameError} />
           </div>
           <div>
             <label htmlFor="edit-amount" className="block text-sm text-[var(--text-muted)] font-medium mb-1">Amount</label>
             <input
               id="edit-amount"
-              className="input-base w-full"
+              type="number"
+              step="0.01"
+              className={`input-base w-full ${amountError ? 'input-error' : ''}`}
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setAmountError(undefined); // Clear error on change
+              }}
             />
+            <ErrorMessage message={amountError} show={!!amountError} />
           </div>
           <CategorySelect
             selectedCategory={category}
@@ -57,10 +84,10 @@ const EditExpenseModal: React.FC<Props> = ({ expense, onUpdate, onCancel, custom
           />
         </div>
         <div className="flex justify-end gap-2">
-          <button className="button button-secondary" onClick={onCancel}>
+          <button className="btn btn-secondary" onClick={onCancel}>
             Cancel
           </button>
-          <button className="button button-primary" onClick={handleSave}>
+          <button className="btn btn-primary" onClick={handleSave}>
             Save
           </button>
         </div>

@@ -6,6 +6,7 @@ import { Budget, Category } from "../types";
 import { DEFAULT_CATEGORIES } from "../constants";
 import { calculateSmartDistribution } from "../utils/budgetUtils";
 import { useDialog } from "../contexts/DialogContext";
+import { Icon } from "./Icon";
 
 interface BudgetManagerModalProps {
     isOpen: boolean;
@@ -148,13 +149,13 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                         <h2 id="budget-modal-title" className="text-xl font-bold text-[var(--text-main)]">
                             Monthly Budgets
                         </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                        <Icon
+                            name="x"
+                            className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
                             aria-label="Close modal"
-                        >
-                            ✕
-                        </button>
+                            // @ts-ignore
+                            onClick={onClose}
+                        />
                     </div>
 
                     {/* Body */}
@@ -178,7 +179,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                                     <button
                                         onClick={handleSetTotalLimit}
                                         disabled={isSaving || !totalBudget}
-                                        className="button button-secondary button-sm"
+                                        className="btn btn-secondary btn-sm"
                                         title="Save this as the total limit"
                                         aria-label="Set total budget limit"
                                     >
@@ -187,7 +188,7 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
                                     <button
                                         onClick={handleDistribute}
                                         disabled={isSaving || !totalBudget}
-                                        className="button button-primary button-sm flex items-center gap-1"
+                                        className="btn btn-primary btn-sm flex items-center gap-1"
                                         title="Smartly distribute based on category priority"
                                         aria-label="Smartly distribute budget"
                                     >

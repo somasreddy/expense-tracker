@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Plus, Edit2, Trash2, Check } from "lucide-react";
+import { Icon } from "./Icon";
 import { useDialog } from "../contexts/DialogContext";
+import { ErrorMessage } from "./ErrorMessage";
+import { isNotBlank, isUnique } from "../utils/validators";
 
 interface Props {
     isOpen: boolean;
@@ -24,18 +26,35 @@ const CategoryManagerModal: React.FC<Props> = ({
     const [editingCategory, setEditingCategory] = useState<string | null>(null);
     const [editValue, setEditValue] = useState("");
     const [loading, setLoading] = useState(false);
+    const [newCategoryError, setNewCategoryError] = useState<string | undefined>();
+    const [editError, setEditError] = useState<string | undefined>();
     const { showConfirm } = useDialog();
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newCategoryName.trim()) return;
+
+        // Validate not blank
+        const blankCheck = isNotBlank(newCategoryName);
+        if (!blankCheck.isValid) {
+            setNewCategoryError(blankCheck.error);
+            return;
+        }
+
+        // Validate unique
+        const uniqueCheck = isUnique(newCategoryName, customCategories);
+        if (!uniqueCheck.isValid) {
+            setNewCategoryError(uniqueCheck.error || "This category already exists");
+            return;
+        }
 
         setLoading(true);
         try {
             await onAddCategory(newCategoryName.trim());
             setNewCategoryName("");
+            setNewCategoryError(undefined);
         } catch (error) {
             console.error(error);
+            setNewCategoryError("Failed to add category");
         } finally {
             setLoading(false);
         }
@@ -44,11 +63,30 @@ const CategoryManagerModal: React.FC<Props> = ({
     const startEditing = (category: string) => {
         setEditingCategory(category);
         setEditValue(category);
+        setEditError(undefined);
     };
 
     const handleUpdate = async () => {
-        if (!editingCategory || !editValue.trim() || editValue === editingCategory) {
+        if (!editingCategory) return;
+
+        // Validate not blank
+        const blankCheck = isNotBlank(editValue);
+        if (!blankCheck.isValid) {
+            setEditError(blankCheck.error);
+            return;
+        }
+
+        // If unchanged, just cancel
+        if (editValue.trim() === editingCategory) {
             setEditingCategory(null);
+            return;
+        }
+
+        // Validate unique (excluding current)
+        const otherCategories = customCategories.filter(c => c !== editingCategory);
+        const uniqueCheck = isUnique(editValue, otherCategories, editingCategory);
+        if (!uniqueCheck.isValid) {
+            setEditError(uniqueCheck.error || "This category already exists");
             return;
         }
 
@@ -56,8 +94,10 @@ const CategoryManagerModal: React.FC<Props> = ({
         try {
             await onUpdateCategory(editingCategory, editValue.trim());
             setEditingCategory(null);
+            setEditError(undefined);
         } catch (error) {
             console.error(error);
+            setEditError("Failed to update category");
         } finally {
             setLoading(false);
         }
@@ -80,103 +120,147 @@ const CategoryManagerModal: React.FC<Props> = ({
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]"
+                    transition={{ duration: 0.2 }}
+                    className="content-surface max-w-lg w-full p-0 overflow-hidden shadow-2xl rounded-2xl border border-[var(--border-subtle)]"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="category-modal-title"
                 >
                     {/* Header */}
-                    <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-                        <h2 className="text-xl font-bold text-white">Manage Categories</h2>
+                    <div className="p-4 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-surface)]">
+                        <h2 id="category-modal-title" className="text-xl font-bold text-[var(--text-main)]">Manage Categories</h2>
                         <button
                             onClick={onClose}
-                            className="text-slate-400 hover:text-white transition-colors"
+                            className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                            aria-label="Close modal"
                         >
-                            <X size={24} />
+                            <Icon name="x" className="w-6 h-6" />
                         </button>
                     </div>
 
                     {/* Content */}
-                    <div className="p-4 overflow-y-auto flex-1 space-y-4">
-                        {/* Add New Category */}
-                        <form onSubmit={handleAdd} className="flex gap-2">
-                            <input
-                                type="text"
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                placeholder="New category name..."
-                                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            />
-                            <button
-                                type="submit"
-                                disabled={loading || !newCategoryName.trim()}
-                                className="bg-amber-500 hover:bg-amber-600 text-slate-900 p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Plus size={20} />
-                            </button>
-                        </form>
-
+                    <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
                         {/* Category List */}
                         <div className="space-y-2">
-                            {customCategories.length === 0 ? (
-                                <p className="text-slate-500 text-center py-4">
-                                    No custom categories yet.
-                                </p>
-                            ) : (
-                                customCategories.map((category) => (
-                                    <div
-                                        key={category}
-                                        className="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700/50"
-                                    >
+                            {customCategories.map((category) => (
+                                <div
+                                    key={category}
+                                    className="flex items-center gap-2 p-3 bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)]"
+                                >
+                                    {editingCategory === category ? (
+                                        <div className="flex-1">
+                                            <input
+                                                className={`input-base w-full ${editError ? 'input-error' : ''}`}
+                                                value={editValue}
+                                                onChange={(e) => {
+                                                    setEditValue(e.target.value);
+                                                    setEditError(undefined);
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") handleUpdate();
+                                                    if (e.key === "Escape") {
+                                                        setEditingCategory(null);
+                                                        setEditError(undefined);
+                                                    }
+                                                }}
+                                                autoFocus
+                                                disabled={loading}
+                                            />
+                                            <ErrorMessage message={editError} show={!!editError} />
+                                        </div>
+                                    ) : (
+                                        <span className="flex-1 text-[var(--text-main)]">{category}</span>
+                                    )}
+
+                                    <div className="flex gap-1shrink-0">
                                         {editingCategory === category ? (
-                                            <div className="flex items-center gap-2 flex-1">
-                                                <input
-                                                    type="text"
-                                                    value={editValue}
-                                                    onChange={(e) => setEditValue(e.target.value)}
-                                                    className="flex-1 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-white text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
-                                                    autoFocus
-                                                />
+                                            <>
                                                 <button
                                                     onClick={handleUpdate}
+                                                    className="p-2 text-green-500 hover:bg-green-500/10 rounded transition-colors"
                                                     disabled={loading}
-                                                    className="text-green-400 hover:text-green-300 p-1"
+                                                    aria-label="Save changes"
                                                 >
-                                                    <Check size={18} />
+                                                    <Icon name="check" className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setEditingCategory(null)}
+                                                    onClick={() => {
+                                                        setEditingCategory(null);
+                                                        setEditError(undefined);
+                                                    }}
+                                                    className="p-2 text-[var(--text-muted)] hover:bg-[var(--bg-hover)] rounded transition-colors"
                                                     disabled={loading}
-                                                    className="text-slate-400 hover:text-slate-300 p-1"
+                                                    aria-label="Cancel editing"
                                                 >
-                                                    <X size={18} />
+                                                    <Icon name="x" className="w-4 h-4" />
                                                 </button>
-                                            </div>
+                                            </>
                                         ) : (
                                             <>
-                                                <span className="text-slate-200">{category}</span>
-                                                <div className="flex items-center gap-1">
-                                                    <button
-                                                        onClick={() => startEditing(category)}
-                                                        className="text-slate-400 hover:text-amber-400 p-1.5 rounded hover:bg-slate-700 transition-colors"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(category)}
-                                                        className="text-slate-400 hover:text-red-400 p-1.5 rounded hover:bg-slate-700 transition-colors"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    onClick={() => startEditing(category)}
+                                                    className="p-2 text-blue-500 hover:bg-blue-500/10 rounded transition-colors"
+                                                    disabled={loading}
+                                                    aria-label={`Edit ${category}`}
+                                                >
+                                                    <Icon name="edit" className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(category)}
+                                                    className="p-2 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                                    disabled={loading}
+                                                    aria-label={`Delete ${category}`}
+                                                >
+                                                    <Icon name="trash" className="w-4 h-4" />
+                                                </button>
                                             </>
                                         )}
                                     </div>
-                                ))
-                            )}
+                                </div>
+                            ))}
                         </div>
+
+                        {/* Add Category Form */}
+                        <form onSubmit={handleAdd} className="pt-4 border-t border-[var(--border-subtle)]">
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <input
+                                        className={`input-base w-full ${newCategoryError ? 'input-error' : ''}`}
+                                        placeholder="New category name..."
+                                        value={newCategoryName}
+                                        onChange={(e) => {
+                                            setNewCategoryName(e.target.value);
+                                            setNewCategoryError(undefined);
+                                        }}
+                                        disabled={loading}
+                                    />
+                                    <ErrorMessage message={newCategoryError} show={!!newCategoryError} />
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={loading}
+                                >
+                                    <Icon name="plus" className="w-4 h-4 mr-1" />
+                                    Add
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] flex justify-end">
+                        <button
+                            onClick={onClose}
+                            className="btn btn-secondary"
+                        >
+                            Close
+                        </button>
                     </div>
                 </motion.div>
             </div>

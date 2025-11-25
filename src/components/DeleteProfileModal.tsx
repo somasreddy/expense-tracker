@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Account } from "../types";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, ArrowRight, Trash2, UserMinus, X } from "lucide-react";
+import { Icon } from "./Icon";
 
 interface Props {
     profileToDelete: Account;
@@ -39,7 +39,7 @@ const DeleteProfileModal: React.FC<Props> = ({
                     <div className="p-6 border-b border-[var(--border-subtle)] flex justify-between items-start bg-[var(--bg-surface)]">
                         <div>
                             <h2 className="text-xl font-bold text-[var(--text-main)] flex items-center gap-2">
-                                <UserMinus className="text-red-500" size={24} />
+                                <Icon name="user-minus" className="text-red-500 w-6 h-6" />
                                 Delete Profile
                             </h2>
                             <p className="text-[var(--text-muted)] mt-1">
@@ -49,8 +49,9 @@ const DeleteProfileModal: React.FC<Props> = ({
                         <button
                             onClick={onCancel}
                             className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors p-1 rounded-lg hover:bg-[var(--card-hover)]"
+                            aria-label="Close modal"
                         >
-                            <X size={20} />
+                            <Icon name="x" className="w-5 h-5" />
                         </button>
                     </div>
 
@@ -58,7 +59,7 @@ const DeleteProfileModal: React.FC<Props> = ({
                         {expenseCount > 0 ? (
                             <>
                                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-3 items-start">
-                                    <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+                                    <Icon name="alert-triangle" className="text-amber-500 shrink-0 mt-0.5 w-5 h-5" />
                                     <div>
                                         <p className="text-amber-600 dark:text-amber-400 font-medium">
                                             This profile has {expenseCount} associated expense{expenseCount !== 1 ? "s" : ""}
@@ -93,7 +94,7 @@ const DeleteProfileModal: React.FC<Props> = ({
                                             <div className="flex-1">
                                                 <div className="font-semibold text-[var(--text-main)] flex items-center gap-2">
                                                     Transfer Expenses
-                                                    <ArrowRight size={16} className="text-[var(--text-muted)]" />
+                                                    <Icon name="arrow-right" className="w-4 h-4 text-[var(--text-muted)]" />
                                                 </div>
                                                 <p className="text-sm text-[var(--text-muted)] mt-1">
                                                     Move all {expenseCount} record{expenseCount !== 1 ? "s" : ""} to another profile safely.
@@ -146,7 +147,7 @@ const DeleteProfileModal: React.FC<Props> = ({
                                         <div className="flex-1">
                                             <div className={`font-semibold flex items-center gap-2 ${deleteExpenses ? "text-red-500" : "text-[var(--text-main)]"}`}>
                                                 Delete Everything
-                                                <Trash2 size={16} className={deleteExpenses ? "text-red-500" : "text-[var(--text-muted)]"} />
+                                                <Icon name="trash" className={`w-4 h-4 ${deleteExpenses ? "text-red-500" : "text-[var(--text-muted)]"}`} />
                                             </div>
                                             <p className="text-sm text-[var(--text-muted)] mt-1">
                                                 Permanently remove the profile and all its {expenseCount} expense{expenseCount !== 1 ? "s" : ""}.
@@ -171,15 +172,15 @@ const DeleteProfileModal: React.FC<Props> = ({
                     <div className="p-6 pt-0 flex justify-end gap-3">
                         <button
                             onClick={onCancel}
-                            className="button button-secondary"
+                            className="btn btn-secondary"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleConfirm}
-                            className={`button text-white shadow-lg shadow-red-500/20 transition-all hover:shadow-red-500/40 ${deleteExpenses || expenseCount === 0
-                                ? "bg-red-500 hover:bg-red-600"
-                                : "bg-[var(--text-highlight)] hover:opacity-90"
+                            className={`btn shadow-lg shadow-red-500/20 transition-all hover:shadow-red-500/40 ${deleteExpenses || expenseCount === 0
+                                ? "btn-danger"
+                                : "btn-primary"
                                 }`}
                         >
                             {deleteExpenses || expenseCount === 0 ? "Delete Profile" : "Transfer & Delete"}
