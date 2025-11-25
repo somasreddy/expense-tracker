@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { auth, signOut } from "./firebase";
 import Auth from "./components/Auth";
+<<<<<<< Updated upstream
+=======
+import Dashboard from "./components/Dashboard";
+import Header from "./components/Header";
+import ProfileManagerModal from "./components/ProfileManagerModal";
+import BudgetManagerModal from "./components/BudgetManagerModal";
+import CategoryManagerModal from "./components/CategoryManagerModal";
+import SettingsModal from "./components/SettingsModal";
+import InstallPrompt from "./components/InstallPrompt";
+import ResetPassword from "./components/ResetPassword";
+import EmailVerification from "./components/EmailVerification";
+import { useExpenseData } from "./hooks/useExpenseData";
+import { useExpenseFilters } from "./hooks/useExpenseFilters";
+import { useBudgets } from "./hooks/useBudgets";
+import { useTheme } from "./services/ThemeContext";
+>>>>>>> Stashed changes
 import { Expense, Category } from "./types";
 import { supabase } from "./supabaseClient";
 import { User } from "@supabase/supabase-js";
@@ -138,6 +154,28 @@ const App: React.FC = () => {
       const { data, error } = await supabase.auth.updateUser({
         data: { full_name: name }
       });
+<<<<<<< Updated upstream
+=======
+
+      if (error) throw error;
+
+      // Update local user state to reflect changes immediately
+      if (data.user) {
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
+
+  // Render
+  // Check for password reset page first
+  const isResetPasswordPage = window.location.hash.includes("type=recovery");
+  if (isResetPasswordPage) {
+    return <ResetPassword />;
+  }
+>>>>>>> Stashed changes
 
       if (error) throw error;
 
@@ -152,13 +190,19 @@ const App: React.FC = () => {
 
 if (!user) return <Auth />;
 
+<<<<<<< Updated upstream
 const currentProfileName =
   (accounts.find((a) => a.id === currentAccountId)?.name || "All Profiles") as string;
+=======
+  const currentProfileName =
+    (accounts.find((a) => a.id === currentAccountId)?.name || "All Profiles") as string;
+>>>>>>> Stashed changes
 
 return (
   <div
     className={`min-h-screen text-[var(--text-main)] p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500 
                   ${currentTheme.gradientClass} ${currentTheme.animationClass}`}
+<<<<<<< Updated upstream
   >
     <Header
       user={user}
@@ -248,4 +292,95 @@ return (
 );
 };
 
+=======
+    >
+      <Header
+        user={user}
+        accounts={accounts}
+        currentAccountId={currentAccountId}
+        onSelectAccount={setCurrentAccountId}
+        onManageAccounts={() => setIsProfileModalOpen(true)}
+        onSignOut={handleSignOut}
+        filter={filter}
+        categoryFilter={categoryFilter}
+        currentProfileName={currentProfileName}
+        filteredTotal={filteredTotal}
+        onManageCategories={() => setIsCategoryModalOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+      />
+
+      <Dashboard
+        onAddExpense={handleAddExpense}
+        filteredTotal={filteredTotal}
+        categoryTotals={categoryTotals}
+        masterFilteredExpenses={masterFilteredExpenses}
+        onSetCategoryFilter={setCategoryFilter}
+        categoryFilter={categoryFilter}
+        onSetFilter={setDateFilter}
+        onClearFilter={clearFilter}
+        displayedExpenses={displayedExpenses}
+        onDeleteExpense={handleDeleteExpenseClick}
+        onEditExpense={setEditingExpense}
+        selectedExpenses={selectedExpenses}
+        onToggleExpenseSelection={handleToggleExpenseSelection}
+        onToggleSelectAll={handleToggleSelectAll}
+        onDeleteSelected={() => {
+          if (
+            selectedExpenses.length > 0 &&
+            window.confirm(`Delete ${selectedExpenses.length} selected expenses?`)
+          ) {
+            selectedExpenses.forEach((id) => deleteExpense(id));
+            setSelectedExpenses([]);
+          }
+        }}
+        onLoadMore={loadMoreExpenses}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        budgets={budgets}
+        onSetBudget={handleSetBudget}
+        customCategories={customCategories || []}
+        onAddCategory={addCategory || (async () => null)}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        user={user}
+        onUpdateProfile={handleUpdateProfile}
+        onManageCategories={() => setIsCategoryModalOpen(true)}
+        onManageProfiles={() => setIsProfileModalOpen(true)}
+      />
+
+      <ProfileManagerModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        accounts={accounts}
+        onAddAccount={addAccount}
+        onDeleteAccount={handleDeleteAccount}
+        onUpdateAccount={updateAccount}
+      />
+
+      <BudgetManagerModal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        customCategories={customCategories || []}
+        budgets={budgets}
+        onSetBudget={handleSetBudget}
+      />
+
+      <CategoryManagerModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        customCategories={customCategories || []}
+        onAddCategory={addCategory || (async () => null)}
+        onUpdateCategory={updateCategory || (async () => { })}
+        onDeleteCategory={deleteCategory || (async () => { })}
+      />
+
+      <InstallPrompt />
+    </div>
+  );
+};
+
+>>>>>>> Stashed changes
 export default App;
