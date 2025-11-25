@@ -1,169 +1,100 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-
-import { useTheme } from "./services/ThemeContext";
-import { Expense, Budget, Category } from "./types";
-
-import ProfileSelector from "./components/ProfileSelector";
-import ProfileManagerModal from "./components/ProfileManagerModal";
-import EditExpenseModal from "./components/EditExpenseModal";
+// Cleaned App.tsx after resolving merge conflicts
+import React, { useState, useEffect } from "react";
+import { auth, signOut } from "./firebase";
 import Auth from "./components/Auth";
 import EmailVerification from "./components/EmailVerification";
 import ResetPassword from "./components/ResetPassword";
 import ThemeSwitcher from "./components/ThemeSwitcher";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
-
-import { auth, onAuthStateChanged, signOut } from "./firebase";
+import Header from "./components/Header";
+import ProfileManagerModal from "./components/ProfileManagerModal";
+import BudgetManagerModal from "./components/BudgetManagerModal";
+import CategoryManagerModal from "./components/CategoryManagerModal";
+import SettingsModal from "./components/SettingsModal";
+import InstallPrompt from "./components/InstallPrompt";
+import ResetPassword from "./components/ResetPassword";
+import EmailVerification from "./components/EmailVerification";
 import { useExpenseData } from "./hooks/useExpenseData";
 import { useExpenseFilters } from "./hooks/useExpenseFilters";
-import {
-  loadBudgets,
-  loadCategories,
-  addCategory,
-  createAndPersistExpense,
-  upsertBudget
-} from "./services/expenseService";
+import { useBudgets } from "./hooks/useBudgets";
+import { useTheme } from "./services/ThemeContext";
+import { Expense, Category } from "./types";
+import { supabase } from "./supabaseClient";
+import { User } from "@supabase/supabase-js";
 
-const EXPENSES_PER_PAGE = 10;
-
-const AppContent: React.FC = () => {
-  const { currentTheme } = useTheme();
-
-  // Auth State
-  const [user, setUser] = useState<typeof auth.currentUser>(null);
+const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [currentAccountId, setCurrentAccountId] = useState<string>("all");
 
+  // Auth listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
       setAuthLoading(false);
     });
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (user?.displayName) {
-      document.title = `${user.displayName}'s Expense Tracker`;
-    } else {
-      document.title = "Expense Tracker";
-    }
-  }, [user]);
-
-  // Data Hooks
+  // Data hooks
   const {
-    expenses: masterExpenses,
+    expenses,
     accounts,
     loading: dataLoading,
     addExpense,
     updateExpense,
     deleteExpense,
+    deleteAccount,
+    customCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
     addAccount,
     updateAccount,
-    deleteAccount,
   } = useExpenseData(user);
 
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
-  const [isAccountManagerOpen, setAccountManagerOpen] = useState(false);
+  const {
+    filter,
+    categoryFilter,
+    setCategoryFilter,
+    setDateFilter,
+    clearFilter,
+    filteredExpenses,
+    filteredTotal,
+    categoryTotals,
+    masterFilteredExpenses,
+    displayedExpenses,
+    loadMoreExpenses,
+    hasMore,
+    isLoadingMore,
+  } = useExpenseFilters(expenses, currentAccountId);
 
-  // Load initial data (budgets, categories)
-  useEffect(() => {
-    if (user) {
-      const init = async () => {
-        try {
-          const loadedBudgets = await loadBudgets();
-          setBudgets(loadedBudgets);
+  const { budgets, setBudget } = useBudgets(user);
+  const { currentTheme } = useTheme();
 
-          const loadedCategories = await loadCategories();
-          setCustomCategories(loadedCategories);
-        } catch (error) {
-          console.error("Failed to load initial data", error);
-        }
-      };
-      init();
-    }
-  }, [user]);
-
-  // UI State
-  const [currentAccountId, setCurrentAccountId] = useState<string>("all");
+  // UI state
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
 
-  // Filter Hook
-  const {
-    filter,
-    setDateFilter,
-    clearFilter,
-    categoryFilter,
-    setCategoryFilter,
-    filteredExpenses: masterFilteredExpenses,
-    filteredTotal,
-    categoryTotals,
-  } = useExpenseFilters(masterExpenses, currentAccountId);
-
-  // Pagination State
-  const [displayedExpenses, setDisplayedExpenses] = useState<Expense[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  // Reset pagination when filters change
-  useEffect(() => {
-    setDisplayedExpenses(masterFilteredExpenses.slice(0, EXPENSES_PER_PAGE));
-    setPage(1);
-    setHasMore(masterFilteredExpenses.length > EXPENSES_PER_PAGE);
-  }, [masterFilteredExpenses]);
-
-  // Load More Callback
-  const loadMoreExpenses = useCallback(() => {
-    if (isLoadingMore || !hasMore) return;
-
-    setIsLoadingMore(true);
-    setTimeout(() => {
-      const next = page + 1;
-      const more = masterFilteredExpenses.slice(
-        page * EXPENSES_PER_PAGE,
-        next * EXPENSES_PER_PAGE
-      );
-
-      setDisplayedExpenses((prev) => [...prev, ...more]);
-      setPage(next);
-      setHasMore(masterFilteredExpenses.length > next * EXPENSES_PER_PAGE);
-      setIsLoadingMore(false);
-    }, 350);
-  }, [page, hasMore, isLoadingMore, masterFilteredExpenses]);
-
   // Handlers
-  const handleAddCategory = async (name: string) => {
-    try {
-      const newCat = await addCategory(name);
-      if (newCat) {
-        setCustomCategories(prev => [...prev, newCat]);
-      }
-    } catch (error) {
-      console.error("Failed to add category", error);
-      alert("Failed to add category. Please try again.");
-    }
-  };
-
-  const handleAddExpense = async (name: string, amount: number, category?: Category): Promise<boolean> => {
-    if (!user) {
-      alert("Please sign in to add expenses.");
-      return false;
-    }
-
+  const handleAddExpense = async (
+    name: string,
+    amount: number,
+    category?: Category,
+    date?: string
+  ): Promise<boolean> => {
     if (!currentAccountId || currentAccountId === "all") {
       alert("Cannot add expense to 'All Profiles'. Please select a specific profile.");
       return false;
     }
-
     try {
-      // @ts-ignore
-      await addExpense(name, amount, currentAccountId, category);
+      // @ts-ignore – addExpense expects accountId as third argument
+      await addExpense(name, amount, currentAccountId, category, date);
       return true;
     } catch (e) {
       console.error(e);
@@ -189,7 +120,6 @@ const AppContent: React.FC = () => {
     }
     const fallback = accounts.find((a) => a.id !== accountId);
     if (!fallback) return;
-
     if (window.confirm(`Delete profile "${accounts.find((a) => a.id === accountId)?.name}"?`)) {
       deleteAccount(accountId, fallback.id);
       if (currentAccountId === accountId) setCurrentAccountId(fallback.id);
@@ -202,8 +132,9 @@ const AppContent: React.FC = () => {
     );
   };
 
-  const handleToggleSelectAll = (ids: string[]) =>
+  const handleToggleSelectAll = (ids: string[]) => {
     setSelectedExpenses(selectedExpenses.length === ids.length ? [] : ids);
+  };
 
   const handleSignOut = async () => {
     try {
@@ -215,16 +146,7 @@ const AppContent: React.FC = () => {
 
   const handleSetBudget = async (category: Category, amount: number) => {
     try {
-      const updatedBudget = await upsertBudget(category, amount);
-      if (updatedBudget) {
-        setBudgets(prev => {
-          const exists = prev.find(b => b.id === updatedBudget.id);
-          if (exists) {
-            return prev.map(b => b.id === updatedBudget.id ? updatedBudget : b);
-          }
-          return [...prev, updatedBudget];
-        });
-      }
+      await setBudget(category, amount);
     } catch (error) {
       console.error("Failed to set budget", error);
       alert("Failed to set budget. Please try again.");
@@ -263,87 +185,98 @@ const AppContent: React.FC = () => {
   if (!user) return <Auth />;
 
   const currentProfileName =
-    accounts.find((a) => a.id === currentAccountId)?.name || "All Profiles";
+    (accounts.find((a) => a.id === currentAccountId)?.name || "All Profiles") as string;
 
   return (
     <div
-      className={`min-h-screen text-[var(--text-main)] p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500 
-                  ${currentTheme.gradientClass} ${currentTheme.animationClass}`}
+      className={`min-h-screen text-[var(--text-main)] p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500 ${currentTheme.gradientClass} ${currentTheme.animationClass}`}
     >
-      <div className="max-w-7xl mx-auto card-surface p-4 sm:p-6 lg:p-8">
-        <Header
-          user={user as any}
-          accounts={accounts}
-          currentAccountId={currentAccountId}
-          onSelectAccount={setCurrentAccountId}
-          onManageAccounts={() => setAccountManagerOpen(true)}
-          onSignOut={handleSignOut}
-          filter={filter}
-          categoryFilter={categoryFilter}
-          currentProfileName={currentProfileName}
-          filteredTotal={filteredTotal}
-        />
+      <Header
+        user={user}
+        accounts={accounts}
+        currentAccountId={currentAccountId}
+        onSelectAccount={setCurrentAccountId}
+        onManageAccounts={() => setIsProfileModalOpen(true)}
+        onSignOut={handleSignOut}
+        filter={filter}
+        categoryFilter={categoryFilter}
+        currentProfileName={currentProfileName}
+        filteredTotal={filteredTotal}
+        onManageCategories={() => setIsCategoryModalOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+      />
 
-        <Dashboard
-          onAddExpense={handleAddExpense}
-          filteredTotal={filteredTotal}
-          categoryTotals={categoryTotals}
-          masterFilteredExpenses={masterFilteredExpenses}
-          onSetCategoryFilter={setCategoryFilter}
-          categoryFilter={categoryFilter}
-          onSetFilter={setDateFilter}
-          onClearFilter={clearFilter}
-          displayedExpenses={displayedExpenses}
-          onDeleteExpense={handleDeleteExpenseClick}
-          onEditExpense={setEditingExpense}
-          selectedExpenses={selectedExpenses}
-          onToggleExpenseSelection={handleToggleExpenseSelection}
-          onToggleSelectAll={handleToggleSelectAll}
-          onDeleteSelected={() => {
-            if (
-              selectedExpenses.length > 0 &&
-              window.confirm(`Delete ${selectedExpenses.length} selected expenses?`)
-            ) {
-              selectedExpenses.forEach((id) => deleteExpense(id));
-              setSelectedExpenses([]);
-            }
-          }}
-          onLoadMore={loadMoreExpenses}
-          hasMore={hasMore}
-          isLoadingMore={isLoadingMore}
-          budgets={budgets}
-          onSetBudget={handleSetBudget}
-          customCategories={customCategories}
-          onAddCategory={handleAddCategory}
-        />
-      </div>
+      <Dashboard
+        onAddExpense={handleAddExpense}
+        filteredTotal={filteredTotal}
+        categoryTotals={categoryTotals}
+        masterFilteredExpenses={masterFilteredExpenses}
+        onSetCategoryFilter={setCategoryFilter}
+        categoryFilter={categoryFilter}
+        onSetFilter={setDateFilter}
+        onClearFilter={clearFilter}
+        displayedExpenses={displayedExpenses}
+        onDeleteExpense={handleDeleteExpenseClick}
+        onEditExpense={setEditingExpense}
+        selectedExpenses={selectedExpenses}
+        onToggleExpenseSelection={handleToggleExpenseSelection}
+        onToggleSelectAll={handleToggleSelectAll}
+        onDeleteSelected={() => {
+          if (
+            selectedExpenses.length > 0 &&
+            window.confirm(`Delete ${selectedExpenses.length} selected expenses?`)
+          ) {
+            selectedExpenses.forEach((id) => deleteExpense(id));
+            setSelectedExpenses([]);
+          }
+        }}
+        onLoadMore={loadMoreExpenses}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        budgets={budgets}
+        onSetBudget={handleSetBudget}
+        customCategories={customCategories || []}
+        onAddCategory={addCategory || (async () => null)}
+      />
 
-      <ThemeSwitcher />
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        user={user}
+        onUpdateProfile={handleUpdateProfile}
+        onManageCategories={() => setIsCategoryModalOpen(true)}
+        onManageProfiles={() => setIsProfileModalOpen(true)}
+      />
 
       <ProfileManagerModal
-        isOpen={isAccountManagerOpen}
-        onClose={() => setAccountManagerOpen(false)}
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
         accounts={accounts}
         onAddAccount={addAccount}
         onDeleteAccount={handleDeleteAccount}
         onUpdateAccount={updateAccount}
       />
 
-      {editingExpense && (
-        <EditExpenseModal
-          expense={editingExpense}
-          onUpdate={handleUpdateExpense}
-          onCancel={() => setEditingExpense(null)}
-          customCategories={customCategories}
-          onAddCategory={handleAddCategory}
-        />
-      )}
+      <BudgetManagerModal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        customCategories={customCategories || []}
+        budgets={budgets}
+        onSetBudget={handleSetBudget}
+      />
+
+      <CategoryManagerModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        customCategories={customCategories || []}
+        onAddCategory={addCategory || (async () => null)}
+        onUpdateCategory={updateCategory || (async () => { })}
+        onDeleteCategory={deleteCategory || (async () => { })}
+      />
+
+      <InstallPrompt />
     </div>
   );
-};
-
-const App: React.FC = () => {
-  return <AppContent />;
 };
 
 export default App;

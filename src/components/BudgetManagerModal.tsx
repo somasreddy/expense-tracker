@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Category, Budget } from "../types";
-import { CATEGORY_KEYWORDS, DEFAULT_CATEGORIES } from "../constants";
+import { DEFAULT_CATEGORIES } from "../constants";
 import { formatToINR } from "../services/expenseService";
+import { calculateSmartDistribution } from "../utils/budgetUtils";
 
 interface BudgetManagerModalProps {
     isOpen: boolean;
@@ -21,13 +22,74 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
 }) => {
     // Combine default and custom categories, removing duplicates if any
     const allCategories = Array.from(new Set([...DEFAULT_CATEGORIES, ...(customCategories || [])]));
+
+    // Find the global limit if it exists
+    const globalLimitBudget = budgets.find(b => b.category === "_TOTAL_");
+    const globalLimit = globalLimitBudget ? globalLimitBudget.amount : 0;
+
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [amount, setAmount] = useState<string>("");
+    const [totalBudget, setTotalBudget] = useState<string>(globalLimit > 0 ? globalLimit.toString() : "");
     const [isSaving, setIsSaving] = useState(false);
+
+    // Calculate currently allocated amount (excluding the special _TOTAL_ category)
+    const currentAllocated = budgets
+        .filter(b => b.category !== "_TOTAL_")
+        .reduce((sum, b) => sum + b.amount, 0);
 
     const handleEdit = (category: Category, currentAmount: number) => {
         setEditingCategory(category);
         setAmount(currentAmount > 0 ? currentAmount.toString() : "");
+    };
+
+    const handleSetTotalLimit = async () => {
+        const total = parseFloat(totalBudget);
+        if (isNaN(total) || total <= 0) {
+            alert("Please enter a valid total budget");
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await onSetBudget("_TOTAL_", total);
+            alert("Total limit updated!");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to update limit");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDistribute = async () => {
+        const total = parseFloat(totalBudget);
+        if (isNaN(total) || total <= 0) {
+            alert("Please enter a valid total budget");
+            return;
+        }
+
+        if (!window.confirm(`This will smartly distribute ${formatToINR(total)} across all categories based on priority (e.g. Rent > Food > Shopping). Continue?`)) {
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            // First save the total limit
+            await onSetBudget("_TOTAL_", total);
+
+            const distribution = calculateSmartDistribution(total, allCategories);
+
+            // Execute all updates in parallel
+            await Promise.all(
+                Object.entries(distribution).map(([cat, amt]) => onSetBudget(cat, amt))
+            );
+
+            alert("Budgets distributed successfully!");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to distribute budgets");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleSave = async () => {
@@ -37,6 +99,17 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
         if (isNaN(numAmount) || numAmount < 0) {
             alert("Please enter a valid amount");
             return;
+        }
+
+        // Check restriction
+        if (globalLimit > 0) {
+            const currentCategoryAmount = budgets.find(b => b.category === editingCategory)?.amount || 0;
+            const newTotalAllocated = currentAllocated - currentCategoryAmount + numAmount;
+
+            if (newTotalAllocated > globalLimit) {
+                alert(`Cannot save: Total allocated (${formatToINR(newTotalAllocated)}) exceeds the limit of ${formatToINR(globalLimit)}.\nRemaining available: ${formatToINR(globalLimit - (currentAllocated - currentCategoryAmount))}`);
+                return;
+            }
         }
 
         setIsSaving(true);
@@ -78,60 +151,106 @@ const BudgetManagerModal: React.FC<BudgetManagerModalProps> = ({
 
                     {/* Body */}
                     <div className="p-4 overflow-y-auto flex-1 space-y-3">
-                        {allCategories.map((cat) => {
-                            const budget = budgets.find((b) => b.category === cat);
-                            const limit = budget?.amount || 0;
-                            const isEditing = editingCategory === cat;
+                        {/* Total Budget Distributor */}
+                        <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] mb-4 shadow-sm">
+                            <label className="block text-sm font-semibold text-[var(--text-muted)] mb-3">
+                                Total Monthly Budget
+                            </label>
 
-                            return (
-                                <div
-                                    key={cat}
-                                    className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-body)] border border-[var(--border-subtle)]"
-                                >
-                                    <div className="flex-1">
-                                        <div className="font-medium text-[var(--text-main)]">{cat}</div>
-                                        {!isEditing && (
-                                            <div className="text-sm text-[var(--text-muted)]">
-                                                {limit > 0 ? `Limit: ${formatToINR(limit)}` : "No limit set"}
+                            <div className="flex flex-col gap-3">
+                                <input
+                                    type="number"
+                                    value={totalBudget}
+                                    onChange={(e) => setTotalBudget(e.target.value)}
+                                    className="input-base w-full text-lg py-2"
+                                    placeholder="e.g. 50000"
+                                />
+
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={handleSetTotalLimit}
+                                        disabled={isSaving || !totalBudget}
+                                        className="button button-secondary button-sm"
+                                        title="Save this as the total limit"
+                                    >
+                                        Set Limit
+                                    </button>
+                                    <button
+                                        onClick={handleDistribute}
+                                        disabled={isSaving || !totalBudget}
+                                        className="button button-primary button-sm flex items-center gap-1"
+                                        title="Smartly distribute based on category priority"
+                                    >
+                                        <span>✨</span> Smart Distribute
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between text-xs text-[var(--text-muted)] mt-3 pt-3 border-t border-[var(--border-subtle)]">
+                                <span>Allocated: <span className="font-medium text-[var(--text-main)]">{formatToINR(currentAllocated)}</span></span>
+                                <span>Remaining: <span className={`font-medium ${parseFloat(totalBudget) - currentAllocated < 0 ? 'text-red-500' : 'text-green-500'}`}>{formatToINR(Math.max(0, (parseFloat(totalBudget) || 0) - currentAllocated))}</span></span>
+                            </div>
+                            <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-70 italic">
+                                *Prioritizes Rent, EMI & Essentials over Discretionary spending.
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            {allCategories.map((cat) => {
+                                const budget = budgets.find((b) => b.category === cat);
+                                const limit = budget?.amount || 0;
+                                const isEditing = editingCategory === cat;
+
+                                return (
+                                    <div
+                                        key={cat}
+                                        className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-body)] border border-[var(--border-subtle)]"
+                                    >
+                                        <div className="flex-1">
+                                            <div className="font-medium text-[var(--text-main)]">{cat}</div>
+                                            {!isEditing && (
+                                                <div className="text-sm text-[var(--text-muted)]">
+                                                    {limit > 0 ? `Limit: ${formatToINR(limit)}` : "No limit set"}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {isEditing ? (
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={amount}
+                                                    onChange={(e) => setAmount(e.target.value)}
+                                                    className="input-base w-24 text-sm py-1"
+                                                    placeholder="Amount"
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    onClick={handleSave}
+                                                    disabled={isSaving}
+                                                    className="p-1 text-green-500 hover:text-green-400"
+                                                >
+                                                    ✓
+                                                </button>
+                                                <button
+                                                    onClick={() => setEditingCategory(null)}
+                                                    className="p-1 text-red-500 hover:text-red-400"
+                                                >
+                                                    ✕
+                                                </button>
                                             </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleEdit(cat, limit)}
+                                                className="text-sm text-[var(--text-highlight)] hover:underline"
+                                            >
+                                                {limit > 0 ? "Edit" : "Set Limit"}
+                                            </button>
                                         )}
                                     </div>
-
-                                    {isEditing ? (
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                value={amount}
-                                                onChange={(e) => setAmount(e.target.value)}
-                                                className="input-base w-24 text-sm py-1"
-                                                placeholder="Amount"
-                                                autoFocus
-                                            />
-                                            <button
-                                                onClick={handleSave}
-                                                disabled={isSaving}
-                                                className="p-1 text-green-500 hover:text-green-400"
-                                            >
-                                                ✓
-                                            </button>
-                                            <button
-                                                onClick={() => setEditingCategory(null)}
-                                                className="p-1 text-red-500 hover:text-red-400"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleEdit(cat, limit)}
-                                            className="text-sm text-[var(--text-highlight)] hover:underline"
-                                        >
-                                            {limit > 0 ? "Edit" : "Set Limit"}
-                                        </button>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </motion.div>
             </div>

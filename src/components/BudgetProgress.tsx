@@ -29,7 +29,9 @@ const BudgetProgress: React.FC<BudgetProgressProps> = ({
             onClick={onClick}
         >
             <div className="flex justify-between items-end mb-1">
-                <span className="font-medium text-sm">{category}</span>
+                <span className="font-medium text-sm">
+                    {category === "_TOTAL_" ? "Total Budget" : category}
+                </span>
                 <span className="text-xs opacity-80">
                     {formatToINR(spent)} / {formatToINR(limit)}
                 </span>

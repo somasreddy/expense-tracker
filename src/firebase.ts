@@ -12,6 +12,7 @@ export interface AuthUser {
   uid: string;
   email?: string;
   displayName?: string | null;
+  emailConfirmedAt?: string | null;
 }
 
 // Internal state
@@ -36,6 +37,7 @@ const mapSupabaseUser = (user: any | null): AuthUser | null => {
       user.user_metadata?.display_name ??
       user.user_metadata?.full_name ??
       null,
+    emailConfirmedAt: user.email_confirmed_at ?? null,
   };
 };
 
@@ -154,6 +156,11 @@ export const sendPasswordResetEmail = async (
   _auth: typeof auth,
   email: string
 ) => {
+  const redirectUrl = window.location.origin + window.location.pathname + "#type=recovery";
+  console.log("🔗 Password Reset Redirect URL:", redirectUrl);
+  console.log("   - Origin:", window.location.origin);
+  console.log("   - Pathname:", window.location.pathname);
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + window.location.pathname + "#type=recovery",
   });
@@ -171,4 +178,29 @@ export const signOut = async (_auth?: typeof auth) => {
   }
   currentUser = null;
   notifyListeners();
+};
+
+// OTP Login Support
+export const sendOtp = async (email: string) => {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false, // Only allow existing users to login via OTP
+    },
+  });
+  if (error) throw error;
+};
+
+export const verifyOtp = async (email: string, token: string, type: "email" | "signup" | "recovery" | "magiclink" = "email") => {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type,
+  });
+
+  if (error) throw error;
+
+  currentUser = mapSupabaseUser(data.user ?? null);
+  notifyListeners();
+  return { user: currentUser, session: data.session };
 };

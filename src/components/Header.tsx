@@ -3,19 +3,24 @@ import { motion } from "framer-motion";
 import { useTheme } from "../services/ThemeContext";
 import ProfileSelector from "./ProfileSelector";
 import { Account, Category } from "../types";
-import { formatToINR } from "../services/expenseService";
+import { User } from "@supabase/supabase-js";
+import { FilterState } from "../hooks/useExpenseFilters";
+import { formatToINR } from "../utils/currencyUtils";
+import { Settings } from "lucide-react";
 
 interface HeaderProps {
-    user: { displayName: string | null };
+    user: User;
     accounts: Account[];
     currentAccountId: string;
-    onSelectAccount: (id: string) => void;
+    onSelectAccount: (accountId: string) => void;
     onManageAccounts: () => void;
     onSignOut: () => void;
-    filter: { start: string | null; end: string | null };
-    categoryFilter: Category | null;
+    filter: FilterState;
+    categoryFilter: string | null;
     currentProfileName: string;
     filteredTotal: number;
+    onManageCategories: () => void;
+    onOpenSettings: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -29,6 +34,8 @@ const Header: React.FC<HeaderProps> = ({
     categoryFilter,
     currentProfileName,
     filteredTotal,
+    onManageCategories,
+    onOpenSettings,
 }) => {
     const { currentTheme } = useTheme();
 
@@ -43,7 +50,13 @@ const Header: React.FC<HeaderProps> = ({
                             WebkitTextFillColor: "transparent",
                         }}
                     >
-                        {user.displayName ? `${user.displayName}'s` : "My"} Expense Tracker
+                        {(() => {
+                            const meta = user.user_metadata;
+                            if (meta?.username) return meta.username;
+                            if (meta?.full_name) return meta.full_name;
+                            if (user.email) return user.email.split('@')[0];
+                            return "My";
+                        })()} Expense Tracker
                     </span>
                 </h1>
 
@@ -54,6 +67,14 @@ const Header: React.FC<HeaderProps> = ({
                         onSelectAccount={onSelectAccount}
                         onManageAccounts={onManageAccounts}
                     />
+
+                    <button
+                        onClick={onOpenSettings}
+                        className="button-icon mr-2"
+                        title="Settings"
+                    >
+                        <Settings className="w-5 h-5" />
+                    </button>
 
                     <motion.button
                         onClick={onSignOut}
@@ -66,19 +87,21 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
             </div>
 
-            {(filter.start && filter.end) || categoryFilter ? (
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 text-sm opacity-80"
-                >
-                    Showing expenses for <strong>{currentProfileName}</strong> — Total:{" "}
-                    <span className="font-bold text-[var(--text-highlight)]">
-                        {formatToINR(filteredTotal)}
-                    </span>
-                </motion.div>
-            ) : null}
-        </header>
+            {
+                (filter.start && filter.end) || categoryFilter ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-4 text-sm opacity-80"
+                    >
+                        Showing expenses for <strong>{currentProfileName}</strong> — Total:{" "}
+                        <span className="font-bold text-[var(--text-highlight)]">
+                            {formatToINR(filteredTotal)}
+                        </span>
+                    </motion.div>
+                ) : null
+            }
+        </header >
     );
 };
 

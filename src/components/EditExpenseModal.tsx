@@ -7,7 +7,7 @@ interface Props {
   onUpdate: (expense: Expense) => void;
   onCancel: () => void;
   customCategories: string[];
-  onAddCategory: (name: string) => Promise<void>;
+  onAddCategory: (name: string) => Promise<string | null>;
 }
 
 const EditExpenseModal: React.FC<Props> = ({ expense, onUpdate, onCancel, customCategories, onAddCategory }) => {

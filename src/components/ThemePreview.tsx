@@ -1,4 +1,4 @@
-import { useTheme, AppTheme } from "./services/ThemeContext";
+import { useTheme, AppTheme } from "../services/ThemeContext";
 
 // Mapping the simplified theme IDs to simple background classes for the preview box.
 // This is now derived from the themes.ts file, which is exposed via the context.
@@ -31,7 +31,7 @@ export default function ThemePreview() {
         >
           {/* Animated Background Preview (only for animated themes) */}
           {t.gradientClass && (
-            <div 
+            <div
               className={`absolute inset-0 ${t.gradientClass} ${t.animationClass} bg-size-200`}
               style={{ animationDuration: '3s', animationIterationCount: 'infinite' }}
             ></div>
