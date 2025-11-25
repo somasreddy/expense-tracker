@@ -1,3 +1,4 @@
+// Cleaned App.tsx after resolving merge conflicts
 import React, { useState, useEffect } from "react";
 import { auth, signOut } from "./firebase";
 import Auth from "./components/Auth";
@@ -55,7 +56,7 @@ const App: React.FC = () => {
     setCategoryFilter,
     setDateFilter,
     clearFilter,
-    filteredExpenses, // not used directly but kept for completeness
+    filteredExpenses,
     filteredTotal,
     categoryTotals,
     masterFilteredExpenses,
