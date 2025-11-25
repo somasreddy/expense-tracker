@@ -1,19 +1,30 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import CategorySelect from "./CategorySelect";
+import VoiceInput from "./VoiceInput";
 import { Category } from "../types";
 import { categorizeExpense } from "../services/expenseService";
 
+// Helper function to get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 // Update Props interface to accept a function that returns a Promise<boolean>
 interface Props {
-    onAddExpense: (name: string, amount: number, category?: Category) => Promise<boolean>;
+    onAddExpense: (name: string, amount: number, category?: Category, date?: string) => Promise<boolean>;
     customCategories: string[];
-    onAddCategory: (name: string) => Promise<void>;
+    onAddCategory: (name: string) => Promise<string | null>;
 }
 
 const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCategory }) => {
     const [name, setName] = useState("");
     const [amount, setAmount] = useState("");
+    const [date, setDate] = useState(getTodayDate()); // Initialize with today's date
     const [category, setCategory] = useState<Category>("");
     const [error, setError] = useState(""); // State for form-level error messages
 
@@ -25,19 +36,20 @@ const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCat
         const amt = parseFloat(amount);
 
         // Form-level validation
-        if (!name.trim() || isNaN(amt) || amt <= 0) {
-            setError("Please enter a valid expense name and a positive amount.");
+        if (!name.trim() || isNaN(amt) || amt <= 0 || !date) {
+            setError("Please enter a valid expense name, a positive amount, and a date.");
             return;
         }
 
         // Call the parent handler and wait for the success signal (true/false)
-        const success = await onAddExpense(name.trim(), amt, category || undefined);
+        const success = await onAddExpense(name.trim(), amt, category || undefined, date);
 
         // ONLY reset form state if the parent handler confirms successful addition
         // (i.e., if it didn't return false due to the 'All Profiles' check).
         if (success) {
             setName("");
             setAmount("");
+            setDate(getTodayDate()); // Reset date to today's date
             setCategory("");
         } else {
             // If the parent handler failed (e.g., showed an alert), the values are retained.
@@ -65,7 +77,7 @@ const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCat
 
             {/* Expense Name Input */}
             <div>
-                <label htmlFor="expense-name" className="block text-sm text-[var(--text-muted)] font-medium mb-1">
+                <label htmlFor="expense-name" className="label-base">
                     Expense Name
                 </label>
                 <input
@@ -97,32 +109,61 @@ const ExpenseForm: React.FC<Props> = ({ onAddExpense, customCategories, onAddCat
                 onAddCategory={onAddCategory}
             />
 
-            {/* Amount Input */}
-            <div>
-                <label htmlFor="expense-amount" className="block text-sm text-[var(--text-muted)] font-medium mb-1">
-                    Amount
-                </label>
-                <input
-                    id="expense-amount"
-                    type="number"
-                    value={amount}
-                    placeholder="e.g. 1200"
-                    onChange={(e) => setAmount(e.target.value)}
-                    min="0.01"
-                    step="0.01"
-                    className="input-base w-full"
-                    required
-                />
+            {/* Date and Amount Row */}
+            <div className="flex gap-4">
+                {/* Date Input */}
+                <div className="flex-1">
+                    <label htmlFor="expense-date" className="label-base">
+                        Date
+                    </label>
+                    <input
+                        id="expense-date"
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="input-base w-full"
+                        required
+                    />
+                </div>
+
+                {/* Amount Input */}
+                <div className="flex-1">
+                    <label htmlFor="expense-amount" className="label-base">
+                        Amount
+                    </label>
+                    <input
+                        id="expense-amount"
+                        type="number"
+                        value={amount}
+                        placeholder="e.g. 1200"
+                        onChange={(e) => setAmount(e.target.value)}
+                        min="0.01"
+                        step="0.01"
+                        className="input-base w-full"
+                        required
+                    />
+                </div>
             </div>
 
-            <motion.button
-                type="submit"
-                className="w-full py-2 px-4 rounded-lg font-semibold bg-amber-500 text-gray-900 hover:bg-amber-400 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-            >
-                Add Expense
-            </motion.button>
+            {/* Voice Input and Submit Button Row */}
+            <div className="flex gap-2">
+                <VoiceInput
+                    onResult={(amt, nm, cat) => {
+                        setAmount(amt.toString());
+                        setName(nm);
+                        if (cat) setCategory(cat);
+                    }}
+                />
+
+                <motion.button
+                    type="submit"
+                    className="button button-primary flex-1"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                >
+                    Add Expense
+                </motion.button>
+            </div>
         </motion.form>
     );
 };

@@ -14,12 +14,14 @@ export const useExpenseData = (user: any) => {
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
+    const [customCategories, setCustomCategories] = useState<string[]>([]);
 
     // Load Data
     useEffect(() => {
         if (!user) {
             setExpenses([]);
             setAccounts([]);
+            setCustomCategories([]);
             setLoading(false);
             return;
         }
@@ -44,20 +46,21 @@ export const useExpenseData = (user: any) => {
             .finally(() => {
                 setLoading(false);
             });
+
+        // Load categories
+        import("../services/expenseService").then(({ loadCategories }) => {
+            loadCategories().then(setCustomCategories);
+        });
+
     }, [user]);
 
     // Auto Save
     useEffect(() => {
         if (!user || loading) return;
 
-        const isInitialDefault =
-            expenses.length === 0 &&
-            accounts.length === 1 &&
-            accounts[0].id.startsWith("default-account");
-
-        if (!isInitialDefault) {
-            saveData({ expenses, accounts });
-        }
+        // We want to save even if it's the initial default, to ensure the profile exists in Supabase
+        // This prevents Foreign Key errors when adding expenses to the default profile.
+        saveData({ expenses, accounts });
     }, [accounts, expenses, user, loading]);
 
     // Real-time Listener
@@ -90,6 +93,8 @@ export const useExpenseData = (user: any) => {
                         });
 
                         if (payload.eventType === "INSERT") {
+                            const exists = newExpenses.some(e => e.id === payload.new.id);
+                            if (exists) return newExpenses;
                             return [toExpense(payload.new), ...newExpenses];
                         } else if (payload.eventType === "DELETE") {
                             return newExpenses.filter((e) => e.id !== payload.old.id);
@@ -115,39 +120,32 @@ export const useExpenseData = (user: any) => {
 
     // Operations
     const addExpense = useCallback(
-        async (name: string, amount: number, accountId: string, category?: Category) => {
-            await createAndPersistExpense(
+        async (name: string, amount: number, accountId: string, category?: Category, date?: string) => {
+            const newExpense = await createAndPersistExpense(
                 { expenses, accounts },
                 name,
                 amount,
-                new Date().toISOString(),
+                date ? new Date(date).toISOString() : new Date().toISOString(),
                 accountId,
                 category
             );
-            // State update happens via realtime or we could optimistically update here
-            // The service functions currently don't return the new object to append easily without reloading or waiting for realtime
-            // But App.tsx relied on realtime or local state update?
-            // Actually App.tsx didn't manually update state after createAndPersistExpense, it relied on the fact that createAndPersistExpense *might* update local storage but the state in App.tsx was only updated via Realtime or if we manually did it.
-            // Wait, createAndPersistExpense returns Promise<void>.
-            // In App.tsx:
-            // await createAndPersistExpense(...)
-            // return true;
-            // It seems it relies on Realtime for the UI update?
-            // Let's check createAndPersistExpense implementation.
+            setExpenses(prev => [newExpense, ...prev]);
         },
         [expenses, accounts]
     );
 
     const updateExpense = useCallback(
         async (expense: Expense) => {
-            await updateExpenseInData({ expenses, accounts }, expense);
+            const updatedData = await updateExpenseInData({ expenses, accounts }, expense);
+            setExpenses(updatedData.expenses);
         },
         [expenses, accounts]
     );
 
     const deleteExpense = useCallback(
         async (id: string) => {
-            await deleteExpenseFromData({ expenses, accounts }, id);
+            const updatedData = await deleteExpenseFromData({ expenses, accounts }, id);
+            setExpenses(updatedData.expenses);
         },
         [expenses, accounts]
     );
@@ -173,6 +171,34 @@ export const useExpenseData = (user: any) => {
         setAccounts((prev) => prev.filter((p) => p.id !== id));
     }, []);
 
+    const addCategory = useCallback(async (name: string) => {
+        const { addCategory: serviceAddCategory } = await import("../services/expenseService");
+        const newCategory = await serviceAddCategory(name);
+        if (newCategory) {
+            setCustomCategories(prev => [...prev, newCategory]);
+            return newCategory;
+        }
+        return null;
+    }, []);
+
+    const updateCategory = useCallback(async (oldName: string, newName: string) => {
+        const { updateCategory: serviceUpdateCategory } = await import("../services/expenseService");
+        const success = await serviceUpdateCategory(oldName, newName);
+        if (success) {
+            setCustomCategories(prev => prev.map(c => c === oldName ? newName : c));
+            // Also update expenses that use this category
+            setExpenses(prev => prev.map(e => e.category === oldName ? { ...e, category: newName } : e));
+        }
+    }, []);
+
+    const deleteCategory = useCallback(async (name: string) => {
+        const { deleteCategory: serviceDeleteCategory } = await import("../services/expenseService");
+        const success = await serviceDeleteCategory(name);
+        if (success) {
+            setCustomCategories(prev => prev.filter(c => c !== name));
+        }
+    }, []);
+
     return {
         expenses,
         accounts,
@@ -183,7 +209,11 @@ export const useExpenseData = (user: any) => {
         addAccount,
         updateAccount,
         deleteAccount,
-        setExpenses, // Exposed if needed for manual manipulation
+        setExpenses,
         setAccounts,
+        customCategories,
+        addCategory,
+        updateCategory,
+        deleteCategory,
     };
 };

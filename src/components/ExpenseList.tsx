@@ -45,13 +45,13 @@ const ExpenseList: React.FC<Props> = (props) => {
             type="checkbox"
             checked={allSelected}
             onChange={onToggleSelectAll}
-            className="w-4 h-4 rounded border-gray-400 accent-amber-500 cursor-pointer"
+            className="checkbox-base"
           />
           <span className="opacity-80 hover:opacity-100 transition-opacity">Select All</span>
         </div>
         {selectedExpenses.length > 0 && (
           <button
-            className="button button-secondary text-xs px-3 py-1 bg-red-900/20 text-red-400 border-red-900/30 hover:bg-red-900/40"
+            className="button button-danger text-xs px-3 py-1"
             onClick={onDeleteSelected}
           >
             Delete Selected ({selectedExpenses.length})
@@ -84,7 +84,7 @@ const ExpenseList: React.FC<Props> = (props) => {
                     type="checkbox"
                     checked={selectedExpenses.includes(exp.id)}
                     onChange={() => onToggleExpenseSelection(exp.id)}
-                    className="w-4 h-4 rounded border-gray-400 accent-amber-500 cursor-pointer"
+                    className="checkbox-base"
                   />
                 </td>
                 <td className="p-3">
@@ -105,13 +105,13 @@ const ExpenseList: React.FC<Props> = (props) => {
                 </td>
                 <td className="p-3 text-right space-x-2">
                   <button
-                    className="px-3 py-1 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:brightness-110 transition-all"
+                    className="button-sm button-secondary"
                     onClick={() => onEditExpense(exp)}
                   >
                     Edit
                   </button>
                   <button
-                    className="px-3 py-1 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all"
+                    className="button-sm button-danger"
                     onClick={() => onDeleteExpense(exp.id)}
                   >
                     Delete

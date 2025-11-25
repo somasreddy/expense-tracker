@@ -1,12 +1,12 @@
 import React from "react";
 import { Category } from "../types";
-import { formatToINR } from "../services/expenseService";
+import { formatToINR } from "../utils/currencyUtils";
 
 interface Props {
   filteredTotal: number;
   categoryTotals: Record<Category, number>;
 }
-	
+
 const Summary: React.FC<Props> = ({ filteredTotal, categoryTotals }) => {
   const topCategories = (Object.entries(categoryTotals) as [Category, number][])
     .filter(([, value]) => value > 0)

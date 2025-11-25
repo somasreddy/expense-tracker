@@ -1,0 +1,43 @@
+{
+    "name": "Expense Tracker",
+    "short_name": "Expenses",
+    "description": "Track your expenses across multiple profiles with budgeting and analytics",
+    "start_url": "/expense-tracker/",
+    "scope": "/expense-tracker/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#f59e0b",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/expense-tracker/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/expense-tracker/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "finance",
+        "productivity"
+    ],
+    "shortcuts": [
+        {
+            "name": "Add Expense",
+            "short_name": "Add",
+            "description": "Quickly add a new expense",
+            "url": "/expense-tracker/#add",
+            "icons": [
+                {
+                    "src": "/expense-tracker/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ]
+}

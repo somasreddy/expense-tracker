@@ -1,7 +1,7 @@
 import React from "react";
 import { Category } from "../types";
 // Import formatToINR for displaying currency in the tooltip
-import { formatToINR } from "../services/expenseService";
+import { formatToINR } from "../utils/currencyUtils";
 import {
   ResponsiveContainer,
   PieChart,
@@ -9,12 +9,8 @@ import {
   Cell,
   Tooltip,
   Legend,
-  TooltipProps, // Import TooltipProps for typing the custom content
+  TooltipProps,
 } from "recharts";
-import {
-  NameType,
-  ValueType,
-} from "recharts/types/component/Tooltip"; // Import necessary Tooltip types
 
 interface Props {
   categoryTotals: Record<Category, number>;
@@ -37,7 +33,7 @@ const COLORS = [
 ];
 
 // Custom Tooltip component to display INR formatted amounts
-const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     const name = data.name;
@@ -73,7 +69,7 @@ const ExpenseChart: React.FC<Props> = ({
 
   return (
     // Ensured parent container has explicit height/width to resolve previous dimension errors
-    <div className="w-full h-72 min-w-0"> 
+    <div className="w-full h-72 min-w-0">
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <PieChart>
           <Pie
@@ -93,7 +89,7 @@ const ExpenseChart: React.FC<Props> = ({
                 fill={COLORS[index % COLORS.length]}
                 stroke={
                   // Highlight active category with a light border color
-                  activeCategory === entry.name ? "#fbbf24" : "rgba(15,23,42,0.8)" 
+                  activeCategory === entry.name ? "#fbbf24" : "rgba(15,23,42,0.8)"
                 }
                 strokeWidth={activeCategory === entry.name ? 3 : 1}
               />
@@ -101,12 +97,12 @@ const ExpenseChart: React.FC<Props> = ({
           </Pie>
 
           {/* ✅ CORRECTION: Use CustomTooltip component for currency formatting */}
-          <Tooltip content={<CustomTooltip />} /> 
-          
-          <Legend 
+          <Tooltip content={<CustomTooltip />} />
+
+          <Legend
             wrapperStyle={{ paddingTop: "10px" }} // Add padding above legend
-            layout="horizontal" 
-            align="center" 
+            layout="horizontal"
+            align="center"
             verticalAlign="bottom"
             iconType="square"
             // Style the text in the legend for dark theme

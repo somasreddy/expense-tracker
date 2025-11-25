@@ -28,16 +28,18 @@ body {
 /* DARK – Neo Dark */
 html[data-theme="dark"] {
   --bg-body: #020617;
-  --bg-elevated: #0f172a; /* slightly lighter than body */
+  --bg-elevated: #0f172a;
+  /* slightly lighter than body */
   --bg-card: #020617;
   --bg-surface: #0f172a;
   --border-subtle: rgba(148, 163, 184, 0.2);
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
-  --text-highlight: #fbbf24; /* amber-400 */
-  
+  --text-highlight: #fbbf24;
+  /* amber-400 */
+
   /* Ensures date picker icons are white */
-  color-scheme: dark; 
+  color-scheme: dark;
 }
 
 /* LIGHT – Soft Light */
@@ -46,10 +48,13 @@ html[data-theme="light"] {
   --bg-elevated: #ffffff;
   --bg-card: #ffffff;
   --bg-surface: #f1f5f9;
-  --border-subtle: #cbd5e1; /* slate-300 */
-  --text-main: #0f172a; /* slate-900 */
+  --border-subtle: #cbd5e1;
+  /* slate-300 */
+  --text-main: #0f172a;
+  /* slate-900 */
   --text-muted: #64748b;
-  --text-highlight: #2563eb; /* blue-600 */
+  --text-highlight: #2563eb;
+  /* blue-600 */
 
   color-scheme: light;
 }
@@ -63,21 +68,24 @@ html[data-theme="ocean"] {
   --border-subtle: rgba(148, 163, 184, 0.2);
   --text-main: #f1f5f9;
   --text-muted: #94a3b8;
-  --text-highlight: #22d3ee; /* cyan-400 */
-  
+  --text-highlight: #22d3ee;
+  /* cyan-400 */
+
   color-scheme: dark;
 }
 
 /* NEON – Purple Neon */
 html[data-theme="neon"] {
   --bg-body: #0f172a;
-  --bg-elevated: #2e1065; /* deep purple */
+  --bg-elevated: #2e1065;
+  /* deep purple */
   --bg-card: #2e1065;
   --bg-surface: #4c1d95;
   --border-subtle: rgba(192, 132, 252, 0.4);
   --text-main: #f3e8ff;
   --text-muted: #a78bfa;
-  --text-highlight: #e879f9; /* fuchsia-400 */
+  --text-highlight: #e879f9;
+  /* fuchsia-400 */
 
   color-scheme: dark;
 }
@@ -120,7 +128,7 @@ body {
 
 .button-primary {
   background-color: var(--text-highlight);
-  color: var(--bg-body); /* Invert contrast */
+  color: var(--bg-body);
   @apply hover:opacity-90;
 }
 
@@ -128,19 +136,71 @@ body {
   background-color: var(--bg-elevated);
   color: var(--text-main);
   border: 1px solid var(--border-subtle);
-  @apply hover:bg-slate-700/10; /* subtle darkening/lightening */
+  @apply hover:bg-slate-700/10;
+}
+
+.button-danger {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  @apply hover:bg-red-500 hover:text-white transition-colors;
+}
+
+.button-sm {
+  @apply px-3 py-1 text-sm rounded-lg;
+}
+
+.button-icon {
+  @apply p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-all;
+}
+
+.checkbox-base {
+  @apply w-4 h-4 rounded border-gray-400 accent-[var(--text-highlight)] cursor-pointer;
+}
+
+.label-base {
+  @apply block text-sm text-[var(--text-muted)] font-medium mb-1;
+}
+
+.chip {
+  @apply px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer border border-transparent;
+}
+
+.chip-active {
+  background-color: var(--text-highlight);
+  color: var(--bg-body);
+}
+
+.chip-inactive {
+  background-color: var(--bg-elevated);
+  color: var(--text-muted);
+  border-color: var(--border-subtle);
+  @apply hover:bg-[var(--bg-surface)] hover:text-[var(--text-main)];
 }
 
 /* -----------------------------------------------------
    ANIMATED THEME UTILITIES
 ----------------------------------------------------- */
-.bg-size-200 { background-size: 200% 200%; }
-.bg-size-300 { background-size: 300% 300%; }
+.bg-size-200 {
+  background-size: 200% 200%;
+}
+
+.bg-size-300 {
+  background-size: 300% 300%;
+}
 
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .animate-shift {
@@ -151,6 +211,7 @@ body {
 .animate-gradient-deep-ocean {
   background-image: linear-gradient(-45deg, #0c4a6e, #1e3a8a, #0f172a);
 }
+
 .animate-gradient-northern-lights {
   background-image: linear-gradient(-45deg, #312e81, #701a75, #4c1d95);
 }

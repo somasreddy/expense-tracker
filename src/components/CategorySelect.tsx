@@ -7,7 +7,7 @@ interface Props {
     selectedCategory: Category;
     onSelectCategory: (category: Category) => void;
     customCategories: string[];
-    onAddCategory: (name: string) => Promise<void>;
+    onAddCategory: (name: string) => Promise<string | null>;
 }
 
 const CategorySelect: React.FC<Props> = ({
@@ -55,7 +55,7 @@ const CategorySelect: React.FC<Props> = ({
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <label className="block text-sm text-[var(--text-muted)] font-medium mb-1">
+            <label className="label-base">
                 Category
             </label>
 
@@ -115,8 +115,8 @@ const CategorySelect: React.FC<Props> = ({
                                 <div
                                     key={cat}
                                     className={`p-2 text-sm rounded cursor-pointer transition-colors ${selectedCategory === cat
-                                            ? "bg-amber-500/20 text-amber-500"
-                                            : "hover:bg-[var(--bg-elevated)] text-[var(--text-main)]"
+                                        ? "bg-amber-500/20 text-amber-500"
+                                        : "hover:bg-[var(--bg-elevated)] text-[var(--text-main)]"
                                         }`}
                                     onClick={() => {
                                         onSelectCategory(cat);

@@ -345,7 +345,7 @@ export const upsertBudget = async (category: Category, amount: number): Promise<
     .select("id")
     .eq("user_id", userId)
     .eq("category", category)
-    .single();
+    .maybeSingle();
 
   const payload = {
     user_id: userId,
@@ -434,4 +434,43 @@ export const addCategory = async (name: string): Promise<string | null> => {
   }
 
   return data ? data.name : null;
+};
+
+export const updateCategory = async (oldName: string, newName: string): Promise<boolean> => {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("User must be logged in to update categories.");
+
+  // Check if new name already exists (in defaults or custom)
+  if (DEFAULT_CATEGORIES.includes(newName)) return false;
+
+  const { error } = await supabase
+    .from("custom_categories")
+    .update({ name: newName })
+    .eq("user_id", userId)
+    .eq("name", oldName);
+
+  if (error) {
+    console.error("Error updating category:", error);
+    throw error;
+  }
+
+  return true;
+};
+
+export const deleteCategory = async (name: string): Promise<boolean> => {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("User must be logged in to delete categories.");
+
+  const { error } = await supabase
+    .from("custom_categories")
+    .delete()
+    .eq("user_id", userId)
+    .eq("name", name);
+
+  if (error) {
+    console.error("Error deleting category:", error);
+    throw error;
+  }
+
+  return true;
 };

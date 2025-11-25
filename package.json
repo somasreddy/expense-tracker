@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.84.0",
     "firebase": "^10.12.2",
     "framer-motion": "^11.3.19",
+    "lucide-react": "^0.554.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.4.1"
