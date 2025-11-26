@@ -15,4 +15,19 @@ export default defineConfig({
       ],
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-is"],
+          "vendor-charts": ["recharts"],
+          "vendor-firebase": ["firebase/app", "firebase/auth", "firebase/firestore"],
+          "vendor-supabase": ["@supabase/supabase-js"],
+          "vendor-ui": ["framer-motion", "lucide-react"],
+          "vendor-capacitor": ["@capacitor/core", "@capacitor/app"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000, // Increase warning limit to 1MB
+  },
 });

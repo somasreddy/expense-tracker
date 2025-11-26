@@ -7,6 +7,13 @@ import {
     createAndPersistExpense,
     updateExpenseInData,
     deleteExpenseFromData,
+    loadCategories,
+    deleteProfile,
+    transferExpenses,
+    deleteAllExpensesForProfile,
+    addCategory as serviceAddCategory,
+    updateCategory as serviceUpdateCategory,
+    deleteCategory as serviceDeleteCategory,
 } from "../services/expenseService";
 import { supabase } from "../supabaseClient";
 
@@ -48,9 +55,7 @@ export const useExpenseData = (user: any) => {
             });
 
         // Load categories
-        import("../services/expenseService").then(({ loadCategories }) => {
-            loadCategories().then(setCustomCategories);
-        });
+        loadCategories().then(setCustomCategories);
 
     }, [user]);
 
@@ -207,8 +212,6 @@ export const useExpenseData = (user: any) => {
     }, []);
 
     const deleteAccount = useCallback(async (id: string, fallbackId?: string) => {
-        const { deleteProfile, transferExpenses, deleteAllExpensesForProfile } = await import("../services/expenseService");
-
         if (fallbackId) {
             // Transfer expenses to fallback profile
             await transferExpenses(id, fallbackId);
@@ -228,7 +231,6 @@ export const useExpenseData = (user: any) => {
     }, []);
 
     const addCategory = useCallback(async (name: string) => {
-        const { addCategory: serviceAddCategory } = await import("../services/expenseService");
         const newCategory = await serviceAddCategory(name);
         if (newCategory) {
             setCustomCategories(prev => [...prev, newCategory]);
@@ -238,7 +240,6 @@ export const useExpenseData = (user: any) => {
     }, []);
 
     const updateCategory = useCallback(async (oldName: string, newName: string) => {
-        const { updateCategory: serviceUpdateCategory } = await import("../services/expenseService");
         const success = await serviceUpdateCategory(oldName, newName);
         if (success) {
             setCustomCategories(prev => prev.map(c => c === oldName ? newName : c));
@@ -248,7 +249,6 @@ export const useExpenseData = (user: any) => {
     }, []);
 
     const deleteCategory = useCallback(async (name: string) => {
-        const { deleteCategory: serviceDeleteCategory } = await import("../services/expenseService");
         const success = await serviceDeleteCategory(name);
         if (success) {
             setCustomCategories(prev => prev.filter(c => c !== name));
