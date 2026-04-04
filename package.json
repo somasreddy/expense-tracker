@@ -37,5 +37,17 @@
     "tailwindcss": "^3.4.13",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
+  },
+  "description": "A modern, multi-account expense tracking application built using **React (Vite)**, **Firebase**, and **Capacitor**. It supports **Voice Input**, **SMS Auto-Capture (Android)**, and **Data Export**.",
+  "main": "tailwind.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/somasreddy/expense-tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/somasreddy/expense-tracker/issues"
   }
 }
