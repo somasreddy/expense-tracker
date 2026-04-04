@@ -5,6 +5,7 @@ import "./index.css";
 import { ThemeProvider } from "./services/ThemeContext";
 import { DialogProvider } from "./contexts/DialogContext";
 import { ToastProvider } from './contexts/ToastContext';
+import Footer from "./components/Footer";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -12,6 +13,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <DialogProvider>
         <ToastProvider>
           <App />
+          <Footer />
         </ToastProvider>
       </DialogProvider>
     </ThemeProvider>

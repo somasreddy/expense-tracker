@@ -12,7 +12,6 @@ import SettingsModal from "./components/SettingsModal";
 import InstallPrompt from "./components/InstallPrompt";
 import EditExpenseModal from "./components/EditExpenseModal";
 import DeleteProfileModal from "./components/DeleteProfileModal";
-import Footer from "./components/Footer";
 
 import { useExpenseData } from "./hooks/useExpenseData";
 import { useExpenseFilters } from "./hooks/useExpenseFilters";
@@ -383,8 +382,6 @@ const App: React.FC = () => {
             onCancel={() => setDeletingProfile(null)}
           />
         )}
-
-        <Footer />
       </div>
     </>
   );
